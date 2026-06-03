@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Processor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header span { font-size: 13px; opacity: 0.7; margin-top: 2px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 15px; font-weight: 600; color: #444; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  /* API Key */
+  .api-row { display: flex; gap: 10px; align-items: center; }
+  .api-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: monospace;
+  }
+  .api-row input:focus { outline: none; border-color: #667eea; }
+
+  /* Upload area */
+  .upload-area {
+    border: 2px dashed #c0c7d6;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafbff;
+  }
+  .upload-area:hover, .upload-area.drag-over { border-color: #667eea; background: #f0f0ff; }
+  .upload-icon { font-size: 40px; margin-bottom: 10px; }
+  .upload-area p { color: #666; font-size: 14px; }
+  .upload-area strong { color: #667eea; }
+  #fileInput { display: none; }
+
+  .file-list { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .file-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: #eef2ff; border: 1px solid #c7d2fe;
+    color: #4338ca; font-size: 13px;
+    padding: 4px 10px; border-radius: 20px;
+  }
+  .file-chip.error { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+  .file-chip.done { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .btn-secondary:hover { background: #e2e8f0; }
+  .btn-success { background: #16a34a; color: white; }
+  .btn-success:hover { background: #15803d; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* Progress */
+  .progress-wrap { margin-top: 16px; }
+  .progress-bar-bg { background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 99px; transition: width 0.3s; }
+  .progress-text { font-size: 12px; color: #666; margin-top: 6px; }
+
+  /* Log */
+  .log {
+    background: #1e1e2e; color: #a6e3a1;
+    border-radius: 8px; padding: 14px;
+    font-family: monospace; font-size: 12px;
+    max-height: 160px; overflow-y: auto;
+    margin-top: 14px; line-height: 1.7;
+  }
+  .log .err { color: #f38ba8; }
+  .log .warn { color: #fab387; }
+  .log .info { color: #89b4fa; }
+
+  /* Duplicates */
+  .dup-alert {
+    background: #fffbeb; border: 1px solid #fcd34d;
+    border-radius: 8px; padding: 12px 16px;
+    font-size: 13px; color: #92400e;
+    margin-bottom: 12px;
+  }
+  .dup-alert strong { display: block; margin-bottom: 4px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: #1a1a2e; color: white;
+    padding: 10px 12px; text-align: left;
+    font-weight: 600; font-size: 12px;
+    white-space: nowrap;
+    position: sticky; top: 0; z-index: 1;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:hover td { background: #f8fafc; }
+  tr.dup-row td { background: #fff7ed; }
+  .dup-badge {
+    background: #fef3c7; color: #92400e;
+    border: 1px solid #fcd34d;
+    font-size: 10px; padding: 2px 6px; border-radius: 10px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .na { color: #94a3b8; font-style: italic; }
+  .amount { font-family: monospace; font-weight: 600; color: #1a1a2e; }
+
+  /* Stats */
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 18px; text-align: center; min-width: 100px; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+  .stat .lbl { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    .card { padding: 16px; }
+    .upload-area { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📄 Invoice Processor</h1>
+    <span>Upload PDFs or Word files — extract & organize invoice data instantly</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- API Key -->
+  <div class="card">
+    <h2>🔑 Anthropic API Key</h2>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="btn btn-secondary" onclick="toggleKey()">Show</button>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Key is stored only in this browser session. Never sent anywhere except api.anthropic.com.</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="card">
+    <h2>📂 Upload Invoices</h2>
+    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📑</div>
+      <p><strong>Click to browse</strong> or drag & drop files here</p>
+      <p style="margin-top:6px;font-size:12px;color:#aaa;">Supports PDF, DOCX, DOC, TXT</p>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt">
+    <div class="file-list" id="fileList"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="processBtn" onclick="processAll()" disabled>
+        ⚡ Extract Invoice Data
+      </button>
+      <button class="btn btn-secondary" onclick="clearFiles()">🗑 Clear Files</button>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap" style="display:none">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+      <div class="progress-text" id="progressText">Starting...</div>
+    </div>
+
+    <div class="log" id="log" style="display:none"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <h2>📊 Extracted Data</h2>
+
+    <div class="stats" id="stats" style="display:none">
+      <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl">Total Invoices</div></div>
+      <div class="stat"><div class="val" id="statDup">0</div><div class="lbl">Duplicates</div></div>
+      <div class="stat"><div class="val" id="statAmount">₹0</div><div class="lbl">Total Amount</div></div>
+    </div>
+
+    <div id="dupAlerts"></div>
+
+    <div class="btn-row" id="exportBtns" style="display:none">
+      <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-secondary" onclick="copyTable()">📋 Copy as TSV</button>
+      <button class="btn btn-secondary" onclick="clearResults()">🗑 Clear Results</button>
+    </div>
+
+    <div id="tableContainer">
+      <div class="empty-state">
+        <div class="icon">🗂</div>
+        <p>No data yet. Upload invoice files and click <strong>Extract Invoice Data</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const COMPANIES   = ['ELYX', 'Protechmanize', 'eProtect360'];
+const CLIENTS     = ['C-Edge','Ampersand','Hubblehox','Highbar','Aivar','Sagacity','Quest2Travel','Ingenero','IIFL','GrilledChilly','Netcore','Tata AMC','Tata Pension','Qualitykiosk','Vervali','IBDIC','HDFC Securities','AppInventive','K Raheja','Kwebmaker','Ddecor','Takayuki'];
+const CLIENT_ALIASES = { 'Ampersand/Hubblehox': ['Ampersand','Hubblehox','AmpersandHubblehox'] };
+
+let allInvoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+let pendingFiles = [];
+
+// ── drag & drop ──────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+document.getElementById('fileInput').addEventListener('change', e => addFiles(e.target.files));
+
+function addFiles(files) {
+  [...files].forEach(f => {
+    if (!pendingFiles.find(p => p.name === f.name && p.size === f.size)) pendingFiles.push(f);
+  });
+  renderFileList();
+  document.getElementById('processBtn').disabled = pendingFiles.length === 0;
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileList');
+  el.innerHTML = pendingFiles.map((f,i) => `
+    <div class="file-chip" id="chip-${i}">
+      ${fileIcon(f.name)} ${f.name}
+      <span style="cursor:pointer;margin-left:4px;opacity:0.6" onclick="removeFile(${i})">✕</span>
+    </div>`).join('');
+}
+
+function fileIcon(n) { return n.endsWith('.pdf') ? '📄' : n.endsWith('.docx')||n.endsWith('.doc') ? '📝' : '📃'; }
+
+function removeFile(i) { pendingFiles.splice(i,1); renderFileList(); document.getElementById('processBtn').disabled = pendingFiles.length === 0; }
+function clearFiles() { pendingFiles = []; renderFileList(); document.getElementById('processBtn').disabled = true; document.getElementById('fileInput').value = ''; }
+
+function toggleKey() {
+  const inp = document.getElementById('apiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+// ── logging ──────────────────────────────────────────────────────────────────
+function log(msg, type='') {
+  const el = document.getElementById('log');
+  el.style.display = 'block';
+  el.innerHTML += `<div class="${type}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(pct, msg) {
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = msg;
+}
+
+// ── text extraction ──────────────────────────────────────────────────────────
+async function extractText(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.pdf')) return extractPDF(file);
+  if (name.endsWith('.docx')) return extractDOCX(file);
+  if (name.endsWith('.doc')) return extractDOCX(file);
+  return new Promise((res,rej) => { const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsText(file); });
+}
+
+async function extractPDF(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(s => s.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+async function extractDOCX(file) {
+  const buf = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value;
+}
+
+// ── Claude API call ──────────────────────────────────────────────────────────
+async function callClaude(apiKey, text, filename) {
+  const prompt = `You are an invoice data extractor. Given invoice text, extract structured data.
+
+KNOWN COMPANIES: ${COMPANIES.join(', ')}
+KNOWN CLIENTS: ${CLIENTS.join(', ')}, Ampersand/Hubblehox
+
+Rules:
+- Company Name: match to one of the known companies (the company ISSUING the invoice). If no match, use "NA".
+- Client Name: match to one of the known clients (the company RECEIVING the invoice / billed to). Use "Ampersand/Hubblehox" if either Ampersand or Hubblehox. If no match, use "NA".
+- Month: derived from invoice date, format "Month YYYY" e.g. "June 2026".
+- Invoice Amount: base amount before GST (number only, no currency symbol).
+- Invoice Total GST: total GST amount (number only). If not present, use "0".
+- Invoice Total Amount: final total including GST (number only).
+- Invoice Description: brief description of services.
+- Invoice No: the invoice number/ID.
+- Invoice Date: as printed on invoice (DD/MM/YYYY or as-is).
+
+Respond ONLY with a JSON array (even if single invoice). Each object must have keys:
+company_name, client_name, month, invoice_no, invoice_date, invoice_description, invoice_amount, invoice_total_gst, invoice_total_amount
+
+If a field is missing or unclear, use empty string "".
+Do NOT include markdown, code fences, or any explanation.
+
+INVOICE TEXT FROM FILE "${filename}":
+---
+${text.substring(0, 12000)}
+---`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-8',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`API error ${resp.status}: ${err}`);
+  }
+
+  const data = await resp.json();
+  const raw = data.content[0].text.trim();
+  try {
+    return JSON.parse(raw);
+  } catch(e) {
+    // try to extract JSON array from response
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Could not parse JSON from response: ' + raw.substring(0,200));
+  }
+}
+
+// ── main processing ──────────────────────────────────────────────────────────
+async function processAll() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  if (pendingFiles.length === 0) { alert('Please upload at least one file.'); return; }
+
+  document.getElementById('processBtn').disabled = true;
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('log').style.display = 'block';
+
+  const total = pendingFiles.length;
+  const newInvoices = [];
+
+  for (let i = 0; i < pendingFiles.length; i++) {
+    const file = pendingFiles[i];
+    setProgress(Math.round((i / total) * 100), `Processing ${i+1}/${total}: ${file.name}`);
+    log(`<span class="info">▶ ${file.name}</span>`);
+
+    const chip = document.getElementById(`chip-${i}`);
+    try {
+      const text = await extractText(file);
+      log(`  Extracted ${text.length} chars of text`);
+
+      const invoices = await callClaude(apiKey, text, file.name);
+      log(`  Found ${invoices.length} invoice(s)`);
+
+      invoices.forEach(inv => {
+        inv._source = file.name;
+        newInvoices.push(inv);
+      });
+
+      if (chip) chip.className = 'file-chip done';
+    } catch(e) {
+      log(`  <span class="err">Error: ${e.message}</span>`, 'err');
+      if (chip) chip.className = 'file-chip error';
+    }
+  }
+
+  setProgress(100, `Done! Processed ${total} file(s).`);
+
+  // merge and detect duplicates
+  const dupInvoiceNos = new Set();
+  newInvoices.forEach(inv => {
+    const key = (inv.invoice_no || '').trim().toLowerCase();
+    if (!key) { allInvoices.push({...inv, _dup: false}); return; }
+    const existsDup = allInvoices.find(a => (a.invoice_no||'').trim().toLowerCase() === key);
+    if (existsDup) {
+      dupInvoiceNos.add(inv.invoice_no);
+      allInvoices.push({...inv, _dup: true});
+      log(`  <span class="warn">⚠ Duplicate invoice: ${inv.invoice_no}</span>`);
+    } else {
+      allInvoices.push({...inv, _dup: false});
+    }
+  });
+
+  localStorage.setItem('invoices', JSON.stringify(allInvoices));
+  renderTable();
+  clearFiles();
+  document.getElementById('processBtn').disabled = false;
+}
+
+// ── render table ──────────────────────────────────────────────────────────────
+function renderTable() {
+  const container = document.getElementById('tableContainer');
+  const exportBtns = document.getElementById('exportBtns');
+  const statsEl = document.getElementById('stats');
+
+  if (allInvoices.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🗂</div><p>No data yet.</p></div>`;
+    exportBtns.style.display = 'none';
+    statsEl.style.display = 'none';
+    document.getElementById('dupAlerts').innerHTML = '';
+    return;
+  }
+
+  // stats
+  statsEl.style.display = 'flex';
+  exportBtns.style.display = 'flex';
+  const dups = allInvoices.filter(i => i._dup);
+  document.getElementById('statTotal').textContent = allInvoices.length;
+  document.getElementById('statDup').textContent = dups.length;
+  const total = allInvoices.reduce((s,i) => s + (parseFloat(i.invoice_total_amount)||0), 0);
+  document.getElementById('statAmount').textContent = '₹' + total.toLocaleString('en-IN');
+
+  // dup alerts
+  const dupNos = [...new Set(dups.map(d => d.invoice_no).filter(Boolean))];
+  document.getElementById('dupAlerts').innerHTML = dupNos.length
+    ? `<div class="dup-alert"><strong>⚠ Duplicate Invoices Detected (${dupNos.length})</strong>Invoice Nos: ${dupNos.join(', ')}</div>`
+    : '';
+
+  const rows = allInvoices.map((inv, idx) => {
+    const companyClass = inv.company_name === 'NA' ? 'na' : '';
+    const clientClass  = inv.client_name  === 'NA' ? 'na' : '';
+    return `<tr class="${inv._dup ? 'dup-row' : ''}">
+      <td>${idx+1}</td>
+      <td class="${companyClass}">${inv.company_name||'NA'}</td>
+      <td class="${clientClass}">${inv.client_name||'NA'}</td>
+      <td>${inv.month||''}</td>
+      <td>${inv.invoice_no||''} ${inv._dup ? '<span class="dup-badge">DUPLICATE</span>':''}</td>
+      <td>${inv.invoice_date||''}</td>
+      <td>${inv.invoice_description||''}</td>
+      <td class="amount">${formatAmt(inv.invoice_amount)}</td>
+      <td class="amount">${formatAmt(inv.invoice_total_gst)}</td>
+      <td class="amount">${formatAmt(inv.invoice_total_amount)}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Sr. No.</th><th>Company Name</th><th>Client Name</th>
+            <th>Month</th><th>Invoice No.</th><th>Invoice Date</th>
+            <th>Invoice Description</th><th>Invoice Amount</th>
+            <th>Total GST</th><th>Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function formatAmt(v) {
+  if (!v && v !== 0) return '';
+  const n = parseFloat(v);
+  if (isNaN(n)) return v;
+  return '₹' + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// ── export ───────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Sr. No.','Company Name','Client Name','Month','Invoice No.','Invoice Date','Invoice Description','Invoice Amount','Invoice Total GST','Invoice Total Amount','Duplicate'];
+  const rows = allInvoices.map((inv,i) => [
+    i+1, inv.company_name||'NA', inv.client_name||'NA',
+    inv.month||'', inv.invoice_no||'', inv.invoice_date||'',
+    inv.invoice_description||'', inv.invoice_amount||'',
+    inv.invoice_total_gst||'', inv.invoice_total_amount||'',
+    inv._dup ? 'YES' : 'NO'
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='invoices.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyTable() {
+  const headers = ['Sr. No.','Company Name','Client Name','Month','Invoice No.','Invoice Date','Invoice Description','Invoice Amount','Invoice Total GST','Invoice Total Amount'];
+  const rows = allInvoices.map((inv,i) => [
+    i+1, inv.company_name||'NA', inv.client_name||'NA',
+    inv.month||'', inv.invoice_no||'', inv.invoice_date||'',
+    inv.invoice_description||'', inv.invoice_amount||'',
+    inv.invoice_total_gst||'', inv.invoice_total_amount||''
+  ].join('\t'));
+  navigator.clipboard.writeText([headers.join('\t'), ...rows].join('\n'))
+    .then(() => alert('Copied! Paste directly into Google Sheets.'))
+    .catch(() => alert('Copy failed — please use Export CSV instead.'));
+}
+
+function clearResults() {
+  if (!confirm('Clear all extracted invoice data?')) return;
+  allInvoices = [];
+  localStorage.removeItem('invoices');
+  renderTable();
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+renderTable();
+</script>
+</body>
+</html>
