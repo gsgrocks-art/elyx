@@ -36,8 +36,7 @@ yarn-error.log*
 
 # app data (SQLite DB + uploaded images) - do not commit business data
 /data/
-/public/uploads/*
-!/public/uploads/.gitkeep
+/uploads/
 
 # vercel
 .vercel

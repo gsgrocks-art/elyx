@@ -19,8 +19,10 @@ services.
 - **WhatsApp sharing**: share any product or the whole catalog/category via a
   `wa.me` link that works on both mobile and desktop.
 - **Data persistence**: products, categories, and settings are stored in a
-  local SQLite database (`data/jewellery.db`); uploaded images are stored in
-  `public/uploads/`. Both are excluded from git — see **Backups** below.
+  local SQLite database (`data/jewellery.db` by default); uploaded images are
+  stored in `uploads/` and served by a small route handler. Both are
+  excluded from git and their locations can be overridden with `DATA_DIR` /
+  `UPLOADS_DIR` for deployment — see **Deploying** below.
 
 ## Getting Started
 
@@ -84,11 +86,14 @@ app/
   (site)/          Public catalog: home, /product/[id], /category/[slug]
   admin/            Admin panel: login, products, categories, staff, settings
   api/              API routes used by the admin panel (auth, CRUD, uploads)
+  uploads/[...path] Route handler that serves uploaded images from disk
 components/         Shared React components (site + admin)
 lib/                Data access layer: db.js, products.js, categories.js,
                     settings.js, admins.js, auth.js, upload.js, whatsapp.js
-data/               SQLite database file (created on first run, gitignored)
-public/uploads/     Uploaded product photos & logo (gitignored)
+data/               SQLite database file (created on first run, gitignored;
+                    override with DATA_DIR)
+uploads/            Uploaded product photos & logo (gitignored; override
+                    with UPLOADS_DIR)
 ```
 
 The data layer in `lib/` is intentionally thin (plain SQL via
@@ -123,33 +128,70 @@ either one out later doesn't touch the rest of the app:
 
 ## Backing Up / Exporting Your Products
 
-All product and category data lives in `data/jewellery.db`, a single SQLite
-file. To back it up, just copy that file somewhere safe (or set up a cron job
-to copy it periodically once deployed). To export your product list as JSON
-or CSV, you can open the database with any SQLite tool (e.g. `sqlite3
-data/jewellery.db ".mode csv" ".output products.csv" "SELECT * FROM
-products;"`) — or ask Claude Code to add an "Export Products" button to the
-admin panel.
+All product and category data lives in `jewellery.db`, a single SQLite file
+under `data/` (or `$DATA_DIR` if you set it when deploying). To back it up,
+just copy that file somewhere safe (or set up a cron job to copy it
+periodically once deployed). To export your product list as JSON or CSV, you
+can open the database with any SQLite tool (e.g. `sqlite3 data/jewellery.db
+".mode csv" ".output products.csv" "SELECT * FROM products;"`) — or ask
+Claude Code to add an "Export Products" button to the admin panel.
 
 ## Deploying
 
 This app needs a Node.js server with **persistent disk storage** (not a
 stateless/serverless platform like plain Vercel functions), because it writes
-the SQLite database and uploaded images to disk. Good options:
+the SQLite database and uploaded images to disk. `DATA_DIR` and
+`UPLOADS_DIR` (see `.env.example`) let you point both at a single mounted
+volume, which is what the steps below do.
 
-- A small VPS (DigitalOcean, Hetzner, etc.) running `npm run build && npm
-  start` behind a process manager like `pm2`, with a reverse proxy (nginx/
-  Caddy) for HTTPS.
-- Render, Railway, or Fly.io using a persistent volume mounted at the project
-  root (so `data/` and `public/uploads/` survive restarts/redeploys).
+### Option A: Railway (recommended — simplest)
 
-Before deploying, set real values for `ADMIN_PASSWORD` and `SESSION_SECRET`
-as environment variables on your host, then run:
+1. Push this repo to GitHub if it isn't already, and merge this branch into
+   your default branch.
+2. At [railway.app](https://railway.app), sign in with GitHub → **New
+   Project** → **Deploy from GitHub repo** → select this repo.
+3. Railway auto-detects the Node app and runs `npm install`, `npm run
+   build`, then `npm start` (via Nixpacks, using the scripts in
+   `package.json`). `next start` automatically listens on the `PORT` env var
+   Railway provides, so no config is needed there.
+4. Add a **Volume**: in the service → **Variables** tab area, open the
+   **Volumes** section → **New Volume** → mount path `/data` (empty,
+   dedicated path — not your app's source folder).
+5. Add these environment variables on the service (**Variables** tab):
+   - `DATA_DIR=/data/db`
+   - `UPLOADS_DIR=/data/uploads`
+   - `ADMIN_USERNAME` / `ADMIN_PASSWORD` — your first admin login
+   - `SESSION_SECRET` — a long random string (e.g. generate with `openssl
+     rand -hex 32` locally and paste the result)
+6. Deploy (Railway does this automatically on push, or click **Deploy**).
+   Once it's live, Railway shows a public URL under **Settings → Networking
+   → Generate Domain** — that's your shareable link, for both the catalog
+   (`/`) and the admin panel (`/admin`).
+7. Redeploys and restarts now keep your products, images, and logins,
+   because they all live on the mounted volume instead of the container's
+   throwaway filesystem.
 
-```bash
-npm run build
-npm start
-```
+### Option B: Render or Fly.io
+
+Same idea, different UI:
+
+- **Render**: New → Web Service → connect the repo → build command `npm
+  install && npm run build`, start command `npm start`. Persistent disks
+  require a paid instance type; add one mounted at `/data`, then set
+  `DATA_DIR=/data/db`, `UPLOADS_DIR=/data/uploads`, `ADMIN_USERNAME`,
+  `ADMIN_PASSWORD`, `SESSION_SECRET` as environment variables.
+- **Fly.io**: `fly launch` in this directory, then `fly volumes create data
+  --size 1` and mount it at `/data` in the generated `fly.toml`
+  (`[mounts]` section), plus the same four environment variables via `fly
+  secrets set`.
+
+### Option C: A small VPS
+
+Run `npm run build && npm start` behind a process manager like `pm2`, with a
+reverse proxy (nginx/Caddy) for HTTPS. No volume needed — `DATA_DIR` and
+`UPLOADS_DIR` can be left unset since everything already lives on the VPS's
+own persistent disk; just set `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and
+`SESSION_SECRET`.
 
 ## Adding Features Later
 
