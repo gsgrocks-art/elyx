@@ -1,13 +1,17 @@
 import Link from "next/link";
 import LogoutButton from "@/components/admin/LogoutButton";
+import { getCurrentAdmin } from "@/lib/auth";
 
 const NAV_ITEMS = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
+  { href: "/admin/staff", label: "Staff" },
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export default function AdminDashboardLayout({ children }) {
+export default async function AdminDashboardLayout({ children }) {
+  const admin = await getCurrentAdmin();
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-[var(--color-border)] bg-[var(--color-primary)] text-white">
@@ -23,6 +27,7 @@ export default function AdminDashboardLayout({ children }) {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            {admin ? <span className="text-sm text-white/70">Signed in as {admin.username}</span> : null}
             <Link href="/" target="_blank" className="text-sm text-white/80 hover:text-white">
               View Site ↗
             </Link>

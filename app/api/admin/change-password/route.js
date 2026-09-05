@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
-import { checkPassword, setPassword } from "@/lib/auth";
+import { getCurrentAdmin } from "@/lib/auth";
+import { verifyCredentials, changePassword } from "@/lib/admins";
 
 export async function POST(request) {
   const { currentPassword, newPassword } = await request.json();
 
-  if (!newPassword || newPassword.length < 4) {
-    return NextResponse.json(
-      { error: "New password must be at least 4 characters" },
-      { status: 400 }
-    );
+  const admin = await getCurrentAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  if (!checkPassword(currentPassword)) {
+  if (!verifyCredentials(admin.username, currentPassword)) {
     return NextResponse.json({ error: "Current password is incorrect" }, { status: 401 });
   }
 
-  setPassword(newPassword);
+  try {
+    changePassword(admin.id, newPassword);
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
   return NextResponse.json({ ok: true });
 }

@@ -8,10 +8,11 @@ services.
 
 ## Features
 
-- **Admin panel** (password-protected): add/edit/delete products with multiple
-  photos, auto-generated product codes (`JWL-0001`, ...), price, category,
-  description, stock status; manage categories; upload your logo; set business
-  name, website, and WhatsApp number.
+- **Admin panel** (multiple staff logins, each with their own username and
+  password): add/edit/delete products with multiple photos, auto-generated
+  product codes (`JWL-0001`, ...), price, category, description, stock
+  status; manage categories; upload your logo; set business name, website,
+  and WhatsApp number.
 - **Customer catalog** (public, no login): browse by category, search by name
   or code, responsive product grid, full product detail pages with an image
   gallery.
@@ -35,10 +36,10 @@ services.
    cp .env.example .env.local
    ```
 
-   - `ADMIN_PASSWORD` — the admin login password used the very first time the
-     app starts (it's hashed into the database). Change it later from
-     **Admin → Settings → Change Password**; editing this env var afterwards
-     has no effect.
+   - `ADMIN_USERNAME` / `ADMIN_PASSWORD` — the first admin account, created
+     the very first time the app starts (the password is hashed into the
+     database). Editing these env vars afterwards has no effect — manage
+     accounts from the admin panel instead (see **Staff Logins** below).
    - `SESSION_SECRET` — any long random string, used to sign the admin login
      session cookie. Generate one with `openssl rand -hex 32`.
 
@@ -57,16 +58,35 @@ On first run, the app seeds the database with the default category list
 Mangalsutra, Nose Pins, Bridal Sets, Combo Sets, Hair Accessories) and a
 default settings row you can edit from the admin panel.
 
+## Staff Logins
+
+Every staff member gets their own username and password instead of sharing
+one admin password. From **Admin → Staff**, anyone signed in can add a new
+staff login or remove one — there's no separate "owner" role, so any signed-in
+staff member can manage the others. A couple of guardrails keep this safe to
+use day-to-day:
+
+- You can't remove your own account while signed in (avoids locking yourself
+  out by mistake).
+- The last remaining account can never be removed (avoids locking everyone
+  out).
+
+Removing a staff login blocks their *next* login attempt; a session they're
+already signed into stays valid until it naturally expires (7 days) since
+sessions are verified by a signed cookie rather than a database lookup on
+every request. That's a deliberate simplification — fine for a small shop's
+staff, not meant for handling a compromised account.
+
 ## Project Structure
 
 ```
 app/
   (site)/          Public catalog: home, /product/[id], /category/[slug]
-  admin/            Admin panel: login, products, categories, settings
+  admin/            Admin panel: login, products, categories, staff, settings
   api/              API routes used by the admin panel (auth, CRUD, uploads)
 components/         Shared React components (site + admin)
 lib/                Data access layer: db.js, products.js, categories.js,
-                    settings.js, auth.js, upload.js, whatsapp.js
+                    settings.js, admins.js, auth.js, upload.js, whatsapp.js
 data/               SQLite database file (created on first run, gitignored)
 public/uploads/     Uploaded product photos & logo (gitignored)
 ```
@@ -74,6 +94,25 @@ public/uploads/     Uploaded product photos & logo (gitignored)
 The data layer in `lib/` is intentionally thin (plain SQL via
 `better-sqlite3`) so it's easy to extend — e.g. add a "New Arrival" filter,
 a discount tag, or an inquiry form — without fighting an ORM.
+
+## Storage & Migrating to the Cloud Later
+
+Everything is local by design right now, but behind two seams so swapping
+either one out later doesn't touch the rest of the app:
+
+- **Database** — `lib/db.js` is the only file that opens a database
+  connection (a local SQLite file). Every other module
+  (`products.js`, `categories.js`, `settings.js`, `admins.js`) imports the
+  shared `db` handle from there and runs plain SQL. Moving to a hosted
+  database (e.g. Postgres) later means changing the connection setup in
+  `lib/db.js` and the query syntax in those modules — API routes and
+  components never touch the database directly, so they don't change.
+- **Images** — `lib/upload.js` is the only file that touches the filesystem
+  for uploads. `saveUploadedFile()`/`deleteUploadedFile()` are the entire
+  interface; callers only ever see the public URL string they return (stored
+  in `product.images` / `settings.logoUrl`). Moving to S3, Cloudinary, or
+  similar later means rewriting those two functions to call that provider's
+  SDK instead of `fs`, without changing any caller.
 
 ## Customizing the Look
 

@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 
 // Lightweight edge-safe check (mirrors lib/auth.js verifySessionToken logic
 // using Web Crypto, since better-sqlite3 / node:crypto HMAC sync API isn't
-// available in the default edge runtime import graph).
+// available in the default edge runtime import graph). This only checks the
+// signature and expiry, not whether the embedded username still exists as
+// an admin account — see the note on createSessionToken in lib/auth.js.
 async function isValidToken(token) {
   if (!token) return false;
   const parts = token.split(".");
   if (parts.length !== 3) return false;
-  const [role, expires, signature] = parts;
+  const [username, expires, signature] = parts;
   if (Date.now() > Number(expires)) return false;
 
   const secret = process.env.SESSION_SECRET || "dev-secret-change-me";
@@ -21,7 +23,7 @@ async function isValidToken(token) {
   const sigBuffer = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(`${role}.${expires}`)
+    new TextEncoder().encode(`${username}.${expires}`)
   );
   const expectedHex = Array.from(new Uint8Array(sigBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
