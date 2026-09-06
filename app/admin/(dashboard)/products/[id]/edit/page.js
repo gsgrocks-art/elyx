@@ -5,7 +5,7 @@ import { listCategories } from "@/lib/categories";
 
 export default async function EditProductPage({ params }) {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = getProductById(id, { includeCost: true });
   const categories = listCategories();
 
   if (!product) notFound();

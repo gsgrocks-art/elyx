@@ -28,6 +28,7 @@ export default async function AdminOrderDetailPage({ params }) {
           orderId={order.id}
           orderStatus={order.orderStatus}
           paymentStatus={order.paymentStatus}
+          deliveryCharges={order.deliveryCharges}
           mobileNumber={order.mobileNumber}
           notifyMessage={buildStatusUpdateMessage(order, order.orderStatus)}
         />
@@ -114,8 +115,12 @@ export default async function AdminOrderDetailPage({ params }) {
 
         <div className="mt-4 flex flex-col items-end gap-0.5 border-t border-[var(--color-border)] pt-3 text-sm">
           <p className="text-neutral-500">Total Items: {order.totalItems}</p>
+          <p className="text-neutral-500">Items Total: {formatPrice(order.orderTotal)}</p>
+          {order.deliveryCharges ? (
+            <p className="text-neutral-500">Delivery Charges: {formatPrice(order.deliveryCharges)}</p>
+          ) : null}
           <p className="font-heading text-lg text-[var(--color-primary)]">
-            Order Total: {formatPrice(order.orderTotal)}
+            Grand Total: {formatPrice(order.orderTotal + (order.deliveryCharges || 0))}
           </p>
         </div>
       </div>

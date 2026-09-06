@@ -20,9 +20,13 @@ services.
   `wa.me` link that works on both mobile and desktop.
 - **Cart & checkout, no payment gateway**: customers add multiple products to
   a cart, adjust quantities, and place an order with their details and
-  delivery address. There is no payment page — orders are submitted directly
-  with status `New`, and the confirmation page tells the customer your team
-  will contact them for payment (see **Orders & Checkout** below).
+  delivery address. There is no payment page — orders are submitted directly,
+  default to **Order In Process**, and the confirmation page tells the
+  customer your team will contact them for payment (see **Orders & Checkout**
+  below).
+- **Billing / accounting report** (Admin → Billing): every product sold,
+  with buying cost, selling cost, delivery charges, and profit margin,
+  filterable by month or a custom date range.
 - **Data persistence**: products, categories, and settings are stored in a
   local SQLite database (`data/jewellery.db` by default); uploaded images are
   stored in `uploads/` and served by a small route handler. Both are
@@ -88,9 +92,10 @@ staff, not meant for handling a compromised account.
 
 Customers can add multiple products to a cart (stored in their browser's
 `localStorage` — there's no customer login), adjust quantities on the cart
-page, then check out with their name, mobile number, optional email, and
-delivery address. **There is no payment step or payment gateway anywhere in
-this flow.** Placing an order:
+page, then check out with their name, mobile number, email, and delivery
+address — all required, and the mobile number must be exactly 10 digits
+(validated both in the form and again on the server). **There is no payment
+step or payment gateway anywhere in this flow.** Placing an order:
 
 1. Sends the cart to `POST /api/orders`, which re-validates every item
    against the live database — rejecting the order if a product was deleted
@@ -103,8 +108,15 @@ this flow.** Placing an order:
    later, past orders keep showing the price the customer actually agreed
    to — only new orders see the new price.
 3. Generates a human-readable order number (`ORD-YYYYMMDD-0001`, sequential
-   per day) and creates the order with status `new`.
-4. Shows a confirmation page with the order number and a payment
+   per day) and creates the order with status `processing` ("Order In
+   Process").
+4. Opens a WhatsApp compose tab, pre-filled with the order details,
+   addressed to **your own shop's WhatsApp number** (from Admin → Settings)
+   — this is the "new order" notification. There's no messaging API wired
+   up, so this happens on the *customer's* device and still needs them to
+   tap Send; it's the closest thing to an instant notification possible
+   without signing up for a paid provider.
+5. Shows a confirmation page with the order number and a payment
    instructions message that pulls your WhatsApp number from **Admin →
    Settings** — never hard-coded — telling the customer your team will
    contact them for payment rather than paying online.
@@ -127,6 +139,32 @@ pre-filled with a status-appropriate message (e.g. "Your order ... has been
 shipped") addressed to the customer's own number — admin clicks it to open
 WhatsApp and send it themselves; there's no automated messaging provider
 wired up, by design (no signup or ongoing cost).
+
+Each order also has a **Delivery Charges** field (₹0 by default), editable
+from the order detail page — since checkout doesn't collect a shipping fee
+upfront, admin sets it after reviewing the order; it's added to the total
+shown to the customer and feeds into the Billing report below.
+
+## Billing & Accounting
+
+Each product has an optional **Buying Cost** field (Admin → Products →
+add/edit a product) that is completely separate from its selling `price` —
+it's admin-only accounting data and is never included in any public page,
+API response, or customer-facing data. This is enforced at the data-access
+layer (`lib/products.js`): callers only get `buyingCost` back when they
+explicitly pass `{ includeCost: true }`, which only admin routes/pages do —
+a public page would have to opt in to leak it, not just forget to strip it.
+
+**Admin → Billing** is an accounting report: one row per product sold
+(across all orders), showing Product Name, Code, Buying Cost, Selling Cost,
+Delivery Charges, Total Selling Cost, and Profit Margin, with dates
+formatted as `10-Sep-2026`. Unlike the selling price, buying cost is **not**
+snapshotted per order — the report always uses the product's current buying
+cost, since it's internal analytics rather than something a customer agreed
+to. Filter by month (a dropdown of the last 12 months) or a custom date
+range; the page shows running totals (selling cost, buying cost, delivery
+charges, total, and profit margin) for whatever's filtered — that's your
+monthly revenue view.
 
 The order data model (`lib/orders.js`, `orders` + `order_items` tables in
 `lib/db.js`) follows the same thin, plain-SQL style as the rest of `lib/` —

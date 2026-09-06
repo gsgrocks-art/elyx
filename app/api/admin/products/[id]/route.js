@@ -4,14 +4,14 @@ import { deleteUploadedFile } from "@/lib/upload";
 
 export async function GET(request, { params }) {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = getProductById(id, { includeCost: true });
   if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ product });
 }
 
 export async function PUT(request, { params }) {
   const { id } = await params;
-  const existing = getProductById(id);
+  const existing = getProductById(id, { includeCost: true });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const data = await request.json();

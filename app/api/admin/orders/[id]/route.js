@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrderById, updateOrderStatus, updatePaymentStatus } from "@/lib/orders";
+import { getOrderById, updateOrderStatus, updatePaymentStatus, updateDeliveryCharges } from "@/lib/orders";
 
 export async function GET(request, { params }) {
   const { id } = await params;
@@ -13,11 +13,12 @@ export async function PUT(request, { params }) {
   const existing = getOrderById(id);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { orderStatus, paymentStatus } = await request.json();
+  const { orderStatus, paymentStatus, deliveryCharges } = await request.json();
 
   try {
     if (orderStatus) updateOrderStatus(id, orderStatus);
     if (paymentStatus) updatePaymentStatus(id, paymentStatus);
+    if (deliveryCharges !== undefined) updateDeliveryCharges(id, deliveryCharges);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

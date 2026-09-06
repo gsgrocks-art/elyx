@@ -20,6 +20,7 @@ export default function ProductForm({ initialProduct, categories: initialCategor
     stock: initialProduct?.stock || "in_stock",
     isNewArrival: initialProduct?.isNewArrival || false,
     discountPercent: initialProduct?.discountPercent ?? "",
+    buyingCost: initialProduct?.buyingCost ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -46,6 +47,7 @@ export default function ProductForm({ initialProduct, categories: initialCategor
       stock: form.stock,
       isNewArrival: form.isNewArrival,
       discountPercent: form.discountPercent === "" ? null : Number(form.discountPercent),
+      buyingCost: form.buyingCost === "" ? null : Number(form.buyingCost),
     };
 
     try {
@@ -107,6 +109,20 @@ export default function ProductForm({ initialProduct, categories: initialCategor
             value={form.price}
             onChange={(e) => update("price", e.target.value)}
             required
+            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Buying Cost (₹) <span className="text-neutral-400">(admin only — never shown to customers)</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.buyingCost}
+            onChange={(e) => update("buyingCost", e.target.value)}
             className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
           />
         </div>

@@ -7,7 +7,7 @@ import DeleteProductButton from "@/components/admin/DeleteProductButton";
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
-  const products = listProducts();
+  const products = listProducts({ includeCost: true });
 
   return (
     <div>
@@ -34,6 +34,7 @@ export default async function AdminProductsPage() {
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Code</th>
                 <th className="px-4 py-3 font-medium">Category</th>
+                <th className="px-4 py-3 font-medium">Buying Cost</th>
                 <th className="px-4 py-3 font-medium">Price</th>
                 <th className="px-4 py-3 font-medium">Stock</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
@@ -52,6 +53,9 @@ export default async function AdminProductsPage() {
                   <td className="px-4 py-3 font-medium text-neutral-800">{product.name}</td>
                   <td className="px-4 py-3 text-neutral-500">{product.code}</td>
                   <td className="px-4 py-3 text-neutral-500">{product.category_name || "—"}</td>
+                  <td className="px-4 py-3 text-neutral-500">
+                    {product.buyingCost != null ? formatPrice(product.buyingCost) : "—"}
+                  </td>
                   <td className="px-4 py-3 text-neutral-700">{formatPrice(product.price)}</td>
                   <td className="px-4 py-3">
                     <span

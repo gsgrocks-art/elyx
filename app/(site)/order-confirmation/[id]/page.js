@@ -44,9 +44,16 @@ export default async function OrderConfirmationPage({ params }) {
             </div>
             <div>
               <p className="text-neutral-500">Order Total</p>
-              <p className="font-medium text-neutral-800">{formatPrice(order.orderTotal)}</p>
+              <p className="font-medium text-neutral-800">
+                {formatPrice(order.orderTotal + (order.deliveryCharges || 0))}
+              </p>
             </div>
           </div>
+          {order.deliveryCharges ? (
+            <p className="mt-2 text-xs text-neutral-400">
+              Includes {formatPrice(order.deliveryCharges)} delivery charges
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-6 rounded-xl border border-[var(--color-border)] p-4">

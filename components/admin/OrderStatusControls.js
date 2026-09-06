@@ -21,11 +21,14 @@ export default function OrderStatusControls({
   orderId,
   orderStatus,
   paymentStatus,
+  deliveryCharges,
   mobileNumber,
   notifyMessage,
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [deliveryInput, setDeliveryInput] = useState(String(deliveryCharges ?? 0));
+  const [deliveryError, setDeliveryError] = useState("");
 
   const update = async (field, value) => {
     setSaving(true);
@@ -35,13 +38,27 @@ export default function OrderStatusControls({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value }),
       });
-      if (!res.ok) throw new Error("Failed to update");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update");
       router.refresh();
-    } catch {
-      alert("Failed to update status.");
+      return true;
+    } catch (err) {
+      alert(err.message || "Failed to update.");
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const saveDeliveryCharges = async (e) => {
+    e.preventDefault();
+    setDeliveryError("");
+    const value = Number(deliveryInput);
+    if (!Number.isFinite(value) || value < 0) {
+      setDeliveryError("Enter a non-negative number.");
+      return;
+    }
+    await update("deliveryCharges", value);
   };
 
   // India-only: order.mobileNumber is stored as a plain 10-digit number
@@ -84,6 +101,29 @@ export default function OrderStatusControls({
           </select>
         </div>
       </div>
+
+      <form onSubmit={saveDeliveryCharges} className="mt-4 flex items-end gap-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Delivery Charges (₹)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={deliveryInput}
+            onChange={(e) => setDeliveryInput(e.target.value)}
+            disabled={saving}
+            className="w-32 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg border border-[var(--color-primary)] px-4 py-2 text-sm font-medium text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white disabled:opacity-50"
+        >
+          Save
+        </button>
+        {deliveryError ? <p className="text-sm text-rose-600">{deliveryError}</p> : null}
+      </form>
 
       {notifyUrl ? (
         <a
