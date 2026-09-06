@@ -12,6 +12,12 @@ const ORDER_STATUS_LABELS = {
   cancelled: "Cancelled",
 };
 const PAYMENT_STATUSES = ["pending", "payment_requested", "payment_received", "payment_failed"];
+const CANCELLATION_REASONS = ["customer_request", "no_inventory", "other"];
+const CANCELLATION_REASON_LABELS = {
+  customer_request: "Order cancelled by customer",
+  no_inventory: "Order cancelled due to no inventory",
+  other: "Other",
+};
 
 function labelizePayment(value) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -22,6 +28,8 @@ export default function OrderStatusControls({
   orderStatus,
   paymentStatus,
   deliveryCharges,
+  cancellationReason,
+  cancellationNote,
   mobileNumber,
   notifyMessage,
 }) {
@@ -30,13 +38,18 @@ export default function OrderStatusControls({
   const [deliveryInput, setDeliveryInput] = useState(String(deliveryCharges ?? 0));
   const [deliveryError, setDeliveryError] = useState("");
 
-  const update = async (field, value) => {
+  const [pendingStatus, setPendingStatus] = useState(orderStatus);
+  const [reason, setReason] = useState(cancellationReason || "");
+  const [note, setNote] = useState(cancellationNote || "");
+  const [reasonError, setReasonError] = useState("");
+
+  const applyUpdate = async (payload) => {
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update");
@@ -50,6 +63,30 @@ export default function OrderStatusControls({
     }
   };
 
+  const handleStatusChange = (newStatus) => {
+    setPendingStatus(newStatus);
+    setReasonError("");
+    if (newStatus !== "cancelled") {
+      applyUpdate({ orderStatus: newStatus });
+    }
+    // "cancelled" isn't saved yet — the reason form below must be filled
+    // in and confirmed first, since a cancellation reason is required.
+  };
+
+  const confirmCancellation = async (e) => {
+    e.preventDefault();
+    setReasonError("");
+    if (!CANCELLATION_REASONS.includes(reason)) {
+      setReasonError("Please select a cancellation reason.");
+      return;
+    }
+    if (reason === "other" && !note.trim()) {
+      setReasonError("Please describe the cancellation reason.");
+      return;
+    }
+    await applyUpdate({ orderStatus: "cancelled", cancellationReason: reason, cancellationNote: note });
+  };
+
   const saveDeliveryCharges = async (e) => {
     e.preventDefault();
     setDeliveryError("");
@@ -58,7 +95,7 @@ export default function OrderStatusControls({
       setDeliveryError("Enter a non-negative number.");
       return;
     }
-    await update("deliveryCharges", value);
+    await applyUpdate({ deliveryCharges: value });
   };
 
   // India-only: order.mobileNumber is stored as a plain 10-digit number
@@ -71,9 +108,9 @@ export default function OrderStatusControls({
         <div>
           <label className="mb-1 block text-sm font-medium text-neutral-700">Order Status</label>
           <select
-            value={orderStatus}
+            value={pendingStatus}
             disabled={saving}
-            onChange={(e) => update("orderStatus", e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
           >
             {ORDER_STATUSES.map((s) => (
@@ -90,7 +127,7 @@ export default function OrderStatusControls({
           <select
             value={paymentStatus}
             disabled={saving}
-            onChange={(e) => update("paymentStatus", e.target.value)}
+            onChange={(e) => applyUpdate({ paymentStatus: e.target.value })}
             className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none"
           >
             {PAYMENT_STATUSES.map((s) => (
@@ -101,6 +138,53 @@ export default function OrderStatusControls({
           </select>
         </div>
       </div>
+
+      {pendingStatus === "cancelled" ? (
+        <form
+          onSubmit={confirmCancellation}
+          className="mt-4 space-y-3 rounded-lg border border-rose-200 bg-rose-50 p-3"
+        >
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">Cancellation Reason</label>
+            <select
+              value={reason}
+              disabled={saving}
+              onChange={(e) => setReason(e.target.value)}
+              className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none sm:max-w-xs"
+            >
+              <option value="">Select a reason…</option>
+              {CANCELLATION_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {CANCELLATION_REASON_LABELS[r]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {reason === "other" ? (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Describe the reason</label>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                disabled={saving}
+                className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none sm:max-w-xs"
+              />
+            </div>
+          ) : null}
+
+          {reasonError ? <p className="text-sm text-rose-600">{reasonError}</p> : null}
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-full bg-rose-600 px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {orderStatus === "cancelled" ? "Update Cancellation" : "Confirm Cancellation"}
+          </button>
+        </form>
+      ) : null}
 
       <form onSubmit={saveDeliveryCharges} className="mt-4 flex items-end gap-2">
         <div>

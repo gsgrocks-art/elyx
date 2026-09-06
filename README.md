@@ -128,7 +128,13 @@ items, total) and can update:
   `Order Dispatched` → `Order Delivered Successfully`, plus `Cancelled`.
   This is the customer-facing lifecycle of the order, shown as a progress
   stepper on the customer's own order confirmation page (which they can
-  revisit any time at its URL to see the latest status).
+  revisit any time at its URL to see the latest status). Selecting
+  `Cancelled` doesn't save immediately — it opens a reason form first
+  (**Order cancelled by customer** / **Order cancelled due to no
+  inventory** / **Other**, with a required free-text description for
+  "Other") and only saves once that's confirmed. The reason is
+  internal-only, shown on the order detail page, and cleared automatically
+  if the order is later un-cancelled.
 - **Payment Status** — `pending` / `payment requested` / `payment received` /
   `payment failed` — a separate, internal-only field for tracking offline
   payment collection. It never appears to customers and doesn't unlock any

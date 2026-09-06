@@ -13,10 +13,11 @@ export async function PUT(request, { params }) {
   const existing = getOrderById(id);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { orderStatus, paymentStatus, deliveryCharges } = await request.json();
+  const { orderStatus, paymentStatus, deliveryCharges, cancellationReason, cancellationNote } =
+    await request.json();
 
   try {
-    if (orderStatus) updateOrderStatus(id, orderStatus);
+    if (orderStatus) updateOrderStatus(id, orderStatus, { cancellationReason, cancellationNote });
     if (paymentStatus) updatePaymentStatus(id, paymentStatus);
     if (deliveryCharges !== undefined) updateDeliveryCharges(id, deliveryCharges);
   } catch (error) {

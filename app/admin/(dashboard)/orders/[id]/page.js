@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getOrderById, buildStatusUpdateMessage } from "@/lib/orders";
+import { getOrderById, buildStatusUpdateMessage, CANCELLATION_REASON_LABELS } from "@/lib/orders";
 import { formatPrice } from "@/lib/whatsapp";
 import OrderStatusControls from "@/components/admin/OrderStatusControls";
 import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
@@ -21,6 +21,14 @@ export default async function AdminOrderDetailPage({ params }) {
           <p className="text-sm text-neutral-400">
             Placed on {new Date(order.createdAt).toLocaleString()}
           </p>
+          {order.orderStatus === "cancelled" && order.cancellationReason ? (
+            <p className="mt-1 text-sm text-rose-600">
+              Cancelled — {CANCELLATION_REASON_LABELS[order.cancellationReason]}
+              {order.cancellationReason === "other" && order.cancellationNote
+                ? `: ${order.cancellationNote}`
+                : ""}
+            </p>
+          ) : null}
         </div>
         <DeleteOrderButton id={order.id} orderNumber={order.orderNumber} redirectTo="/admin/orders" />
       </div>
@@ -31,6 +39,8 @@ export default async function AdminOrderDetailPage({ params }) {
           orderStatus={order.orderStatus}
           paymentStatus={order.paymentStatus}
           deliveryCharges={order.deliveryCharges}
+          cancellationReason={order.cancellationReason}
+          cancellationNote={order.cancellationNote}
           mobileNumber={order.mobileNumber}
           notifyMessage={buildStatusUpdateMessage(order, order.orderStatus)}
         />
