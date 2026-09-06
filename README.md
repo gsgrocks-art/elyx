@@ -18,6 +18,11 @@ services.
   gallery.
 - **WhatsApp sharing**: share any product or the whole catalog/category via a
   `wa.me` link that works on both mobile and desktop.
+- **Cart & checkout, no payment gateway**: customers add multiple products to
+  a cart, adjust quantities, and place an order with their details and
+  delivery address. There is no payment page — orders are submitted directly
+  with status `New`, and the confirmation page tells the customer your team
+  will contact them for payment (see **Orders & Checkout** below).
 - **Data persistence**: products, categories, and settings are stored in a
   local SQLite database (`data/jewellery.db` by default); uploaded images are
   stored in `uploads/` and served by a small route handler. Both are
@@ -79,17 +84,58 @@ sessions are verified by a signed cookie rather than a database lookup on
 every request. That's a deliberate simplification — fine for a small shop's
 staff, not meant for handling a compromised account.
 
+## Orders & Checkout
+
+Customers can add multiple products to a cart (stored in their browser's
+`localStorage` — there's no customer login), adjust quantities on the cart
+page, then check out with their name, mobile number, optional email, and
+delivery address. **There is no payment step or payment gateway anywhere in
+this flow.** Placing an order:
+
+1. Sends the cart to `POST /api/orders`, which re-validates every item
+   against the live database — rejecting the order if a product was deleted
+   or went out of stock since it was added to the cart — and **recomputes
+   the price and total from the database**, ignoring whatever price the
+   browser sent. This is what keeps a customer from tampering with prices
+   client-side.
+2. Snapshots the product name, code, image, and price onto the order at the
+   moment of purchase (in `order_items`). If you change a product's price
+   later, past orders keep showing the price the customer actually agreed
+   to — only new orders see the new price.
+3. Generates a human-readable order number (`ORD-YYYYMMDD-0001`, sequential
+   per day) and creates the order with status `new`.
+4. Shows a confirmation page with the order number and a payment
+   instructions message that pulls your WhatsApp number from **Admin →
+   Settings** — never hard-coded — telling the customer your team will
+   contact them for payment rather than paying online.
+
+From **Admin → Orders**, staff see every order (customer, address, line
+items, total) and can update:
+
+- **Order Status** — `new` / `processing` / `shipped` / `delivered` /
+  `cancelled` — the customer-facing lifecycle of the order.
+- **Payment Status** — `pending` / `payment requested` / `payment received` /
+  `payment failed` — an internal-only field for tracking offline payment
+  collection. It never appears to customers and doesn't unlock any
+  in-app payment flow; it's just a note for staff.
+
+The order data model (`lib/orders.js`, `orders` + `order_items` tables in
+`lib/db.js`) follows the same thin, plain-SQL style as the rest of `lib/` —
+easy to extend with things like order search/filtering or CSV export later.
+
 ## Project Structure
 
 ```
 app/
-  (site)/          Public catalog: home, /product/[id], /category/[slug]
-  admin/            Admin panel: login, products, categories, staff, settings
-  api/              API routes used by the admin panel (auth, CRUD, uploads)
+  (site)/          Public catalog + cart/checkout: home, /product/[id],
+                    /category/[slug], /cart, /checkout, /order-confirmation/[id]
+  admin/            Admin panel: login, products, categories, orders, staff, settings
+  api/              API routes: auth, CRUD, uploads, and /api/orders (public)
   uploads/[...path] Route handler that serves uploaded images from disk
-components/         Shared React components (site + admin)
+components/         Shared React components (site + admin), incl. CartContext
 lib/                Data access layer: db.js, products.js, categories.js,
-                    settings.js, admins.js, auth.js, upload.js, whatsapp.js
+                    settings.js, admins.js, orders.js, auth.js, upload.js,
+                    whatsapp.js
 data/               SQLite database file (created on first run, gitignored;
                     override with DATA_DIR)
 uploads/            Uploaded product photos & logo (gitignored; override

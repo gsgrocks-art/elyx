@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/whatsapp";
 import WhatsAppShareButton from "./WhatsAppShareButton";
+import AddToCartButton from "./AddToCartButton";
 
 export default function ProductCard({ product }) {
   const image = product.images?.[0];
@@ -56,7 +57,8 @@ export default function ProductCard({ product }) {
           {formatPrice(product.price)}
         </p>
 
-        <div className="mt-2">
+        <div className="mt-2 flex flex-col gap-1.5">
+          <AddToCartButton product={product} small />
           <WhatsAppShareButton
             path={`/product/${product.id}`}
             message={`Check out ${product.name} (${product.code}) - ${formatPrice(product.price)}`}

@@ -6,6 +6,7 @@ import { listCategories } from "@/lib/categories";
 import { buildContactUrl } from "@/lib/whatsapp";
 import CategoryTabs from "./CategoryTabs";
 import SearchBar from "./SearchBar";
+import CartBadge from "./CartBadge";
 
 export default function Header() {
   const settings = getSettings();
@@ -48,16 +49,19 @@ export default function Header() {
           </Suspense>
         </div>
 
-        {contactUrl ? (
-          <a
-            href={contactUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="order-2 ml-auto inline-flex items-center gap-2 rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 sm:order-3 sm:ml-0"
-          >
-            WhatsApp Us
-          </a>
-        ) : null}
+        <div className="order-2 ml-auto flex items-center gap-2 sm:order-3 sm:ml-0">
+          <CartBadge />
+          {contactUrl ? (
+            <a
+              href={contactUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+            >
+              WhatsApp Us
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <div className="mx-auto max-w-6xl">

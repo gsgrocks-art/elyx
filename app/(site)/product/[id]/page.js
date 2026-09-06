@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProductGallery from "@/components/ProductGallery";
 import WhatsAppShareButton from "@/components/WhatsAppShareButton";
+import AddToCartButton from "@/components/AddToCartButton";
 import { getProductById } from "@/lib/products";
 import { getSettings } from "@/lib/settings";
 import { formatPrice, buildContactUrl } from "@/lib/whatsapp";
@@ -79,7 +80,11 @@ export default async function ProductPage({ params }) {
             </p>
           ) : null}
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 w-full sm:w-64">
+            <AddToCartButton product={product} />
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-3">
             <WhatsAppShareButton
               path={`/product/${product.id}`}
               message={`Check out ${product.name} (${product.code}) - ${formatPrice(product.price)}`}
