@@ -4,6 +4,7 @@ import { getOrderById, buildStatusUpdateMessage, CANCELLATION_REASON_LABELS } fr
 import { formatPrice } from "@/lib/whatsapp";
 import OrderStatusControls from "@/components/admin/OrderStatusControls";
 import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
+import OrderItemReturnToggle from "@/components/admin/OrderItemReturnToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function AdminOrderDetailPage({ params }) {
 
         <div className="space-y-3 sm:hidden">
           {order.items.map((item) => (
-            <div key={item.id} className="flex gap-3 border-b border-[var(--color-border)] pb-3 last:border-0">
+            <div key={item.id} className="flex flex-wrap items-start gap-3 border-b border-[var(--color-border)] pb-3 last:border-0">
               <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100">
                 {item.productImage ? (
                   <Image src={item.productImage} alt={item.productName} fill sizes="56px" className="object-cover" />
@@ -98,8 +99,14 @@ export default async function AdminOrderDetailPage({ params }) {
                 <p className="text-neutral-400">
                   Qty {item.quantity} × {formatPrice(item.unitPrice)}
                 </p>
+                {item.isReturned ? (
+                  <p className="mt-1 text-xs text-rose-600">Returned – Damaged</p>
+                ) : null}
               </div>
               <p className="text-sm font-medium text-neutral-700">{formatPrice(item.subtotal)}</p>
+              <div className="w-full">
+                <OrderItemReturnToggle itemId={item.id} isReturned={item.isReturned} />
+              </div>
             </div>
           ))}
         </div>
@@ -111,15 +118,24 @@ export default async function AdminOrderDetailPage({ params }) {
               <th className="py-2 font-medium">Quantity</th>
               <th className="py-2 font-medium">Unit Price</th>
               <th className="py-2 font-medium">Subtotal</th>
+              <th className="py-2 font-medium">Return</th>
             </tr>
           </thead>
           <tbody>
             {order.items.map((item) => (
               <tr key={item.id} className="border-b border-[var(--color-border)] last:border-0">
-                <td className="py-2 text-neutral-800">{item.productName}</td>
+                <td className="py-2 text-neutral-800">
+                  {item.productName}
+                  {item.isReturned ? (
+                    <span className="ml-2 text-xs font-medium text-rose-600">Returned – Damaged</span>
+                  ) : null}
+                </td>
                 <td className="py-2 text-neutral-600">{item.quantity}</td>
                 <td className="py-2 text-neutral-600">{formatPrice(item.unitPrice)}</td>
                 <td className="py-2 font-medium text-neutral-800">{formatPrice(item.subtotal)}</td>
+                <td className="py-2">
+                  <OrderItemReturnToggle itemId={item.id} isReturned={item.isReturned} />
+                </td>
               </tr>
             ))}
           </tbody>

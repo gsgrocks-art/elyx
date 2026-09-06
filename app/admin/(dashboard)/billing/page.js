@@ -146,10 +146,18 @@ export default async function AdminBillingPage({ searchParams }) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.itemId} className="border-b border-[var(--color-border)] last:border-0">
+                <tr
+                  key={r.itemId}
+                  className={`border-b border-[var(--color-border)] last:border-0 ${r.isReturned ? "bg-rose-50/40" : ""}`}
+                >
                   <td className="px-4 py-3 text-neutral-500">{formatDate(r.orderDate)}</td>
                   <td className="px-4 py-3 text-neutral-500">{r.orderNumber}</td>
-                  <td className="px-4 py-3 font-medium text-neutral-800">{r.productName}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-800">
+                    {r.productName}
+                    {r.isReturned ? (
+                      <span className="ml-2 text-xs font-medium text-rose-600">Returned – Damaged</span>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-3 text-neutral-500">{r.productCode || "—"}</td>
                   <td className="px-4 py-3 text-neutral-600">{r.quantity}</td>
                   <td className="px-4 py-3 text-neutral-600">
@@ -160,14 +168,16 @@ export default async function AdminBillingPage({ searchParams }) {
                   <td className="px-4 py-3 font-medium text-neutral-800">{formatPrice(r.totalSellingCost)}</td>
                   <td
                     className={`px-4 py-3 font-medium ${
-                      r.profitMargin == null
-                        ? "text-neutral-400"
-                        : r.profitMargin >= 0
-                          ? "text-emerald-700"
-                          : "text-rose-600"
+                      r.isReturned
+                        ? "text-rose-600"
+                        : r.profitMargin == null
+                          ? "text-neutral-400"
+                          : r.profitMargin >= 0
+                            ? "text-emerald-700"
+                            : "text-rose-600"
                     }`}
                   >
-                    {r.profitMargin != null ? formatPrice(r.profitMargin) : "—"}
+                    {r.isReturned ? "Returned – Damaged" : r.profitMargin != null ? formatPrice(r.profitMargin) : "—"}
                   </td>
                 </tr>
               ))}
