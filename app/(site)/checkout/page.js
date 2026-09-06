@@ -28,8 +28,24 @@ export default function CheckoutPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [mobileError, setMobileError] = useState("");
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+
+  const validateMobile = (value) => {
+    if (!/^\d{10}$/.test(value)) {
+      setMobileError("Mobile number must be exactly 10 digits.");
+      return false;
+    }
+    setMobileError("");
+    return true;
+  };
+
+  const handleMobileChange = (value) => {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+    update("mobileNumber", digitsOnly);
+    if (mobileError) validateMobile(digitsOnly);
+  };
 
   if (!loaded) return null;
 
@@ -52,6 +68,11 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (submitting) return;
     setError("");
+
+    if (!validateMobile(form.mobileNumber)) {
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -63,7 +84,7 @@ export default function CheckoutPage() {
             firstName: form.firstName,
             lastName: form.lastName,
             mobileNumber: form.mobileNumber,
-            email: form.email || undefined,
+            email: form.email,
           },
           address: {
             addressLine1: form.addressLine1,
@@ -112,17 +133,24 @@ export default function CheckoutPage() {
                 onChange={(e) => update("lastName", e.target.value)}
                 className={FIELD_CLASS}
               />
-              <input
-                type="tel"
-                placeholder="Mobile Number"
-                required
-                value={form.mobileNumber}
-                onChange={(e) => update("mobileNumber", e.target.value)}
-                className={FIELD_CLASS}
-              />
+              <div>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Mobile Number"
+                  required
+                  maxLength={10}
+                  value={form.mobileNumber}
+                  onChange={(e) => handleMobileChange(e.target.value)}
+                  onBlur={(e) => validateMobile(e.target.value)}
+                  className={`${FIELD_CLASS} ${mobileError ? "border-rose-500" : ""}`}
+                />
+                {mobileError ? <p className="mt-1 text-xs text-rose-600">{mobileError}</p> : null}
+              </div>
               <input
                 type="email"
-                placeholder="Email (Optional)"
+                placeholder="Email"
+                required
                 value={form.email}
                 onChange={(e) => update("email", e.target.value)}
                 className={FIELD_CLASS}
