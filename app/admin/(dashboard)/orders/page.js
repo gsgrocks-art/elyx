@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listOrders, ORDER_STATUS_LABELS } from "@/lib/orders";
 import { formatPrice } from "@/lib/whatsapp";
+import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -64,9 +65,12 @@ export default function AdminOrdersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/orders/${order.id}`} className="text-[var(--color-primary)] hover:underline">
-                      View
-                    </Link>
+                    <div className="flex gap-3">
+                      <Link href={`/admin/orders/${order.id}`} className="text-[var(--color-primary)] hover:underline">
+                        View
+                      </Link>
+                      <DeleteOrderButton id={order.id} orderNumber={order.orderNumber} />
+                    </div>
                   </td>
                 </tr>
               ))}

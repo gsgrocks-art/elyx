@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getOrderById, buildStatusUpdateMessage } from "@/lib/orders";
 import { formatPrice } from "@/lib/whatsapp";
 import OrderStatusControls from "@/components/admin/OrderStatusControls";
+import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function AdminOrderDetailPage({ params }) {
             Placed on {new Date(order.createdAt).toLocaleString()}
           </p>
         </div>
+        <DeleteOrderButton id={order.id} orderNumber={order.orderNumber} redirectTo="/admin/orders" />
       </div>
 
       <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-white p-4">
