@@ -1,8 +1,8 @@
-import { Playfair_Display, Inter } from "next/font/google";
+import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { getSettings } from "@/lib/settings";
 
-const heading = Playfair_Display({
+const heading = Poppins({
   variable: "--font-heading",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -24,8 +24,8 @@ export async function generateMetadata() {
 export default function RootLayout({ children }) {
   const settings = getSettings();
   const themeVars = {
-    "--color-primary": settings?.primaryColor || "#0f3d3e",
-    "--color-accent": settings?.accentColor || "#c9a227",
+    "--color-primary": settings?.primaryColor || "#3D1560",
+    "--color-accent": settings?.accentColor || "#E6007E",
   };
 
   return (

@@ -112,12 +112,21 @@ this flow.** Placing an order:
 From **Admin → Orders**, staff see every order (customer, address, line
 items, total) and can update:
 
-- **Order Status** — `new` / `processing` / `shipped` / `delivered` /
-  `cancelled` — the customer-facing lifecycle of the order.
+- **Order Status** — `Order In Process` (the default for every new order) →
+  `Order Dispatched` → `Order Delivered Successfully`, plus `Cancelled`.
+  This is the customer-facing lifecycle of the order, shown as a progress
+  stepper on the customer's own order confirmation page (which they can
+  revisit any time at its URL to see the latest status).
 - **Payment Status** — `pending` / `payment requested` / `payment received` /
-  `payment failed` — an internal-only field for tracking offline payment
-  collection. It never appears to customers and doesn't unlock any
+  `payment failed` — a separate, internal-only field for tracking offline
+  payment collection. It never appears to customers and doesn't unlock any
   in-app payment flow; it's just a note for staff.
+
+Changing the Order Status shows a **"Notify Customer via WhatsApp"** button
+pre-filled with a status-appropriate message (e.g. "Your order ... has been
+shipped") addressed to the customer's own number — admin clicks it to open
+WhatsApp and send it themselves; there's no automated messaging provider
+wired up, by design (no signup or ongoing cost).
 
 The order data model (`lib/orders.js`, `orders` + `order_items` tables in
 `lib/db.js`) follows the same thin, plain-SQL style as the rest of `lib/` —

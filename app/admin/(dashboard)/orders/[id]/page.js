@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getOrderById } from "@/lib/orders";
+import { getOrderById, buildStatusUpdateMessage } from "@/lib/orders";
 import { formatPrice } from "@/lib/whatsapp";
 import OrderStatusControls from "@/components/admin/OrderStatusControls";
 
@@ -28,6 +28,8 @@ export default async function AdminOrderDetailPage({ params }) {
           orderId={order.id}
           orderStatus={order.orderStatus}
           paymentStatus={order.paymentStatus}
+          mobileNumber={order.mobileNumber}
+          notifyMessage={buildStatusUpdateMessage(order, order.orderStatus)}
         />
       </div>
 

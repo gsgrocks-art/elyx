@@ -12,8 +12,8 @@ export default function SettingsForm({ initialSettings }) {
     logoUrl: initialSettings?.logoUrl || "",
     websiteUrl: initialSettings?.websiteUrl || "",
     whatsappNumber: initialSettings?.whatsappNumber || "",
-    primaryColor: initialSettings?.primaryColor || "#0f3d3e",
-    accentColor: initialSettings?.accentColor || "#c9a227",
+    primaryColor: initialSettings?.primaryColor || "#3d1560",
+    accentColor: initialSettings?.accentColor || "#e6007e",
   });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);

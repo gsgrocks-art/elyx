@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf8f3;
-  --foreground: #241c10;
-  --color-primary: #0f3d3e;
-  --color-primary-light: #17595a;
-  --color-accent: #c9a227;
-  --color-accent-light: #e2c469;
+  --background: #faf9fc;
+  --foreground: #221933;
+  --color-primary: #3d1560;
+  --color-primary-light: #6b2e9e;
+  --color-accent: #e6007e;
+  --color-accent-light: #f472b6;
   --color-surface: #ffffff;
-  --color-border: #e7e0d1;
+  --color-border: #e5e0ea;
 }
 
 @theme inline {
@@ -30,7 +30,7 @@ body {
 }
 
 .font-heading {
-  font-family: var(--font-heading), "Georgia", serif;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
 }
 
 ::selection {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getOrderById } from "@/lib/orders";
 import { getSettings } from "@/lib/settings";
 import { formatPrice } from "@/lib/whatsapp";
+import OrderStatusStepper from "@/components/OrderStatusStepper";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,11 @@ export default async function OrderConfirmationPage({ params }) {
               <p className="font-medium text-neutral-800">{formatPrice(order.orderTotal)}</p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 rounded-xl border border-[var(--color-border)] p-4">
+          <h2 className="mb-4 font-heading text-base text-[var(--color-primary)]">Order Status</h2>
+          <OrderStatusStepper status={order.orderStatus} />
         </div>
 
         <div className="mt-6 rounded-xl border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/5 p-4 text-left">
