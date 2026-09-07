@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/CartContext";
-import { formatPrice, buildContactUrl } from "@/lib/whatsapp";
+import { formatPrice } from "@/lib/whatsapp";
 
 const FIELD_CLASS =
   "w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm focus:border-[var(--color-primary)] focus:outline-none";
 
-export default function CheckoutForm({ shopWhatsappNumber }) {
+export default function CheckoutForm() {
   const router = useRouter();
   const { items, totalItems, totalPrice, clearCart, loaded } = useCart();
 
@@ -99,24 +99,6 @@ export default function CheckoutForm({ shopWhatsappNumber }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to place order");
-
-      // Best-effort shop notification: there's no messaging API wired up,
-      // so this opens a WhatsApp compose tab (pre-filled, addressed to the
-      // shop's own number) on the customer's device — they still need to
-      // tap send. It's the only way to notify the shop without a paid
-      // provider; see CheckoutForm/README for the limitation.
-      if (shopWhatsappNumber) {
-        const order = data.order;
-        const notifyText =
-          `New order received!\n\n` +
-          `Order: ${order.orderNumber}\n` +
-          `Customer: ${form.firstName} ${form.lastName}\n` +
-          `Mobile: ${form.mobileNumber}\n` +
-          `Items: ${order.totalItems}\n` +
-          `Total: ${formatPrice(order.orderTotal)}`;
-        const notifyUrl = buildContactUrl(shopWhatsappNumber, notifyText);
-        if (notifyUrl) window.open(notifyUrl, "_blank", "noopener,noreferrer");
-      }
 
       clearCart();
       router.push(`/order-confirmation/${data.order.id}`);
