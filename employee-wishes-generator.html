@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Employee Wishes Generator</title>
+<meta name="description" content="Generate professional birthday, wedding anniversary and work anniversary wishes for employees.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#12162b;
+    --navy-2:#1b2140;
+    --accent:#5b5bf0;
+    --accent-2:#8b5cf6;
+    --gold:#c9a44c;
+    --bg:#f4f5fb;
+    --card-bg:#ffffff;
+    --text:#1c1f2e;
+    --muted:#6b7280;
+    --border:#e7e8f2;
+    --success:#16a34a;
+    --danger:#dc2626;
+    --whatsapp:#25d366;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;}
+  input,select,textarea{font-family:inherit;}
+  a{color:inherit;}
+  img{max-width:100%;}
+
+  /* ---------- layout shells ---------- */
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+  .hidden{display:none !important;}
+
+  .topbar{
+    background:linear-gradient(120deg,var(--navy),var(--navy-2));
+    color:#fff;
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    box-shadow:0 2px 14px rgba(18,22,43,0.25);
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar-left{display:flex;align-items:center;gap:12px;min-width:0;}
+  .topbar-logo{
+    width:38px;height:38px;border-radius:10px;background:#fff;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;
+    box-shadow:0 1px 4px rgba(0,0,0,0.25);
+  }
+  .topbar-logo img{width:100%;height:100%;object-fit:contain;}
+  .topbar-title{font-weight:700;font-size:16px;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar-sub{font-size:11px;opacity:0.65;margin-top:1px;}
+  .topbar-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .nav-link{
+    color:#fff;opacity:0.85;text-decoration:none;font-size:13px;font-weight:600;
+    padding:8px 12px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid transparent;
+    transition:all .15s;
+  }
+  .nav-link:hover{opacity:1;background:rgba(255,255,255,0.08);}
+  .nav-link.active{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.2);opacity:1;}
+  .nav-user{font-size:12px;opacity:0.7;padding:0 4px;}
+  .btn-logout{
+    background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.25);
+    padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .btn-logout:hover{background:rgba(255,255,255,0.2);}
+
+  .main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* ---------- generic cards / buttons ---------- */
+  .panel{
+    background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+    padding:28px;box-shadow:0 1px 3px rgba(20,24,50,0.04);
+  }
+  .page-head{margin-bottom:22px;}
+  .page-head h1{font-size:24px;font-weight:800;margin:0 0 6px;}
+  .page-head p{color:var(--muted);font-size:14px;margin:0;}
+  .breadcrumb{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;gap:6px;align-items:center;}
+  .breadcrumb .link{color:var(--accent);cursor:pointer;font-weight:600;}
+  .breadcrumb .link:hover{text-decoration:underline;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 20px;border-radius:10px;border:none;font-size:14px;font-weight:700;
+    cursor:pointer;transition:all .15s;white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(120deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 4px 14px rgba(91,91,240,0.32);}
+  .btn-primary:hover{box-shadow:0 6px 18px rgba(91,91,240,0.44);transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none;}
+  .btn-secondary{background:#eef0fb;color:var(--navy);border:1px solid #dfe2f5;}
+  .btn-secondary:hover{background:#e2e5f8;}
+  .btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--border);}
+  .btn-ghost:hover{background:#f6f7fd;}
+  .btn-success{background:var(--success);color:#fff;}
+  .btn-success:hover{background:#15803d;}
+  .btn-whatsapp{background:var(--whatsapp);color:#fff;}
+  .btn-whatsapp:hover{background:#1fb956;}
+  .btn-block{width:100%;}
+  .btn-sm{padding:8px 14px;font-size:13px;}
+
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:7px;}
+  .field .hint{font-size:12px;color:var(--muted);margin-top:6px;}
+  .field input[type=text],.field input[type=password],.field input[type=email],.field textarea{
+    width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;
+    color:var(--text);background:#fbfbfe;transition:border-color .15s,background .15s;
+  }
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .required-star{color:var(--danger);margin-left:3px;}
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;
+    max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  .toast.error{background:#7f1d1d;}
+  .toast.success{background:#14532d;}
+
+  /* ---------- login ---------- */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:radial-gradient(1200px 800px at 20% -10%,#232a55 0%,var(--navy) 45%,#0c0e1c 100%);}
+  .login-card{
+    width:100%;max-width:400px;background:#fff;border-radius:20px;padding:36px 32px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  }
+  .login-logo{width:64px;height:64px;border-radius:16px;overflow:hidden;margin:0 auto 16px;display:flex;
+    align-items:center;justify-content:center;background:#f4f5fb;border:1px solid var(--border);}
+  .login-logo img{width:100%;height:100%;object-fit:contain;}
+  .login-card h2{text-align:center;font-size:20px;font-weight:800;margin:0 0 4px;}
+  .login-card .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 26px;}
+  .login-error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:13px;padding:10px 12px;
+    border-radius:8px;margin-bottom:16px;display:none;}
+  .login-error.show{display:block;}
+  .login-footnote{text-align:center;font-size:11px;color:#a3a7bd;margin-top:20px;line-height:1.6;}
+
+  /* ---------- dashboard ---------- */
+  .occasion-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .occasion-card{
+    background:#fff;border:1px solid var(--border);border-radius:18px;padding:30px 24px;text-align:center;
+    cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+  }
+  .occasion-card:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(20,24,60,0.12);border-color:transparent;}
+  .occasion-card .glow{position:absolute;inset:0;opacity:0;transition:opacity .2s;z-index:0;}
+  .occasion-card:hover .glow{opacity:1;}
+  .occasion-card.birthday .glow{background:linear-gradient(160deg,#fff3e6,#ffffff 60%);}
+  .occasion-card.wedding .glow{background:linear-gradient(160deg,#fdf0f5,#ffffff 60%);}
+  .occasion-card.work .glow{background:linear-gradient(160deg,#eaf4ff,#ffffff 60%);}
+  .occasion-card > *{position:relative;z-index:1;}
+  .occasion-emoji{font-size:46px;margin-bottom:14px;display:block;}
+  .occasion-card h3{font-size:18px;font-weight:800;margin:0 0 8px;}
+  .occasion-card p{font-size:13px;color:var(--muted);margin:0 0 20px;}
+  .occasion-card .btn{width:100%;}
+
+  /* ---------- form ---------- */
+  .form-wrap{max-width:560px;margin:0 auto;}
+  .form-occasion-badge{
+    display:inline-flex;align-items:center;gap:8px;background:#f0f1fb;color:var(--accent);
+    padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;margin-bottom:16px;
+  }
+
+  /* ---------- preview ---------- */
+  .preview-layout{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:32px;align-items:start;}
+  .card-preview-wrap{
+    background:#f0f1f7;border-radius:18px;padding:16px;border:1px solid var(--border);
+  }
+  .card-preview-wrap canvas{width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 10px 30px rgba(20,24,60,0.18);background:#fff;}
+  .preview-actions h2{font-size:16px;font-weight:800;margin:0 0 4px;}
+  .preview-actions .sub{font-size:13px;color:var(--muted);margin:0 0 20px;}
+  .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .action-grid .btn{width:100%;}
+  .msg-preview{
+    background:#fbfbfe;border:1.5px dashed var(--border);border-radius:10px;padding:14px 16px;
+    font-size:13.5px;line-height:1.6;color:#444;white-space:pre-wrap;margin-bottom:18px;
+  }
+
+  /* ---------- admin ---------- */
+  .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .logo-uploader{
+    border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;
+    transition:all .15s;background:#fbfbfe;
+  }
+  .logo-uploader:hover,.logo-uploader.drag{border-color:var(--accent);background:#f4f4ff;}
+  .logo-current{
+    display:flex;align-items:center;gap:16px;padding:16px;background:#fbfbfe;border:1px solid var(--border);
+    border-radius:12px;margin-bottom:16px;
+  }
+  .logo-current .box{width:80px;height:80px;border-radius:10px;background:#fff;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+  .logo-current .box img{width:100%;height:100%;object-fit:contain;}
+  .logo-current .meta{font-size:12px;color:var(--muted);}
+  .color-swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .swatch{width:34px;height:34px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
+  .swatch.selected{border-color:var(--navy);transform:scale(1.08);}
+  .admin-note{font-size:12px;color:var(--muted);background:#f4f5fb;border-radius:10px;padding:12px 14px;line-height:1.6;margin-top:6px;}
+
+  footer.app-footer{text-align:center;font-size:12px;color:#9aa0b8;padding:20px;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:860px){
+    .occasion-grid{grid-template-columns:1fr;}
+    .preview-layout{grid-template-columns:1fr;}
+    .admin-grid{grid-template-columns:1fr;}
+    .main{padding:20px 14px 50px;}
+    .panel{padding:20px;}
+    .topbar{padding:12px 16px;}
+  }
+  @media (max-width:420px){
+    .action-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ LOGIN ============ -->
+  <div id="screen-login" class="hidden">
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-logo" id="loginLogoBox"><span style="font-size:26px;">🎁</span></div>
+        <h2 id="loginTitle">Employee Wishes Generator</h2>
+        <p class="sub">Sign in to create employee greeting cards</p>
+        <div class="login-error" id="loginError"></div>
+        <form id="loginForm" autocomplete="off">
+          <div class="field">
+            <label for="loginUser">Email / User ID</label>
+            <input type="text" id="loginUser" placeholder="you@company.com" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="loginPass">Access Code</label>
+            <input type="password" id="loginPass" placeholder="Enter access code" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </form>
+        <p class="login-footnote">Use your HR team access code to sign in.<br>Admins: use the admin access code to unlock Settings.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APP (post-login) ============ -->
+  <div id="screen-app" class="hidden">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-logo" id="topbarLogoBox"><span style="font-size:18px;">🎁</span></div>
+        <div>
+          <div class="topbar-title" id="topbarTitle">Employee Wishes Generator</div>
+          <div class="topbar-sub" id="topbarSub">HR Wishes Dashboard</div>
+        </div>
+      </div>
+      <div class="topbar-nav">
+        <span class="nav-link" data-route="#/dashboard">Dashboard</span>
+        <span class="nav-link hidden" id="navAdmin" data-route="#/admin">⚙ Settings</span>
+        <span class="nav-user" id="navUser"></span>
+        <button class="btn-logout" id="btnLogout">Logout</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- ---- Dashboard ---- -->
+      <div id="view-dashboard" class="hidden">
+        <div class="page-head">
+          <h1>What would you like to create?</h1>
+          <p>Pick an occasion, enter the employee's name, and generate a ready-to-share card in seconds.</p>
+        </div>
+        <div class="occasion-grid" id="occasionGrid"></div>
+      </div>
+
+      <!-- ---- Form ---- -->
+      <div id="view-form" class="hidden">
+        <div class="breadcrumb"><span class="link" data-route="#/dashboard">Dashboard</span> <span>/</span> <span id="formCrumb">Form</span></div>
+        <div class="panel form-wrap">
+          <div class="form-occasion-badge" id="formBadge"></div>
+          <h1 style="font-size:22px;font-weight:800;margin:0 0 6px;" id="formTitle"></h1>
+          <p style="color:var(--muted);font-size:14px;margin:0 0 24px;">Only the employee name is required. Fill it in and generate the card.</p>
+
+          <form id="wishForm" autocomplete="off">
+            <div class="field">
+              <label for="fEmployeeName">Employee Name <span class="required-star">*</span></label>
+              <input type="text" id="fEmployeeName" placeholder="e.g. Priya Sharma" maxlength="80" required>
+            </div>
+            <div class="field">
+              <label for="fDesignation">Designation <span style="color:var(--muted);font-weight:500;">(optional)</span></label>
+              <input type="text" id="fDesignation" placeholder="e.g. Senior Software Engineer" maxlength="60">
+            </div>
+            <div class="field">
+              <label for="fDepartment">Department <span style="color:var(--muted);font-weight:500;">(optional)</span></label>
+              <input type="text" id="fDepartment" placeholder="e.g. Engineering" maxlength="60">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="btnGenerate">✨ Generate Wish</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---- Preview ---- -->
+      <div id="view-preview" class="hidden">
+        <div class="breadcrumb"><span class="link" data-route="#/dashboard">Dashboard</span> <span>/</span> <span class="link" id="previewCrumbBack">Form</span> <span>/</span> <span>Preview</span></div>
+        <div class="panel">
+          <div class="preview-layout">
+            <div class="card-preview-wrap">
+              <canvas id="wishCanvas" width="1080" height="1350"></canvas>
+            </div>
+            <div class="preview-actions">
+              <h2 id="previewHeading">Card ready 🎉</h2>
+              <p class="sub">Download, copy the message, or share directly with the team.</p>
+
+              <div class="action-grid">
+                <button class="btn btn-secondary" id="btnRegenerate">🔄 Generate Again</button>
+                <button class="btn btn-secondary" id="btnEditName">✏️ Edit Name</button>
+                <button class="btn btn-primary" id="btnDownloadPng">⬇ Download PNG</button>
+                <button class="btn btn-primary" id="btnDownloadJpg">⬇ Download JPG</button>
+                <button class="btn btn-ghost" id="btnCopyMsg">📋 Copy Message</button>
+                <button class="btn btn-ghost" id="btnShare">📤 Share</button>
+              </div>
+              <button class="btn btn-whatsapp btn-block" id="btnWhatsapp" style="margin-bottom:18px;">💬 Share on WhatsApp</button>
+
+              <div class="msg-preview" id="msgPreview"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- Admin ---- -->
+      <div id="view-admin" class="hidden">
+        <div class="breadcrumb"><span class="link" data-route="#/dashboard">Dashboard</span> <span>/</span> <span>Settings</span></div>
+        <div class="page-head">
+          <h1>⚙ Admin Settings</h1>
+          <p>Manage the company logo and branding used across every wish card. Only admins can see this page.</p>
+        </div>
+
+        <div class="admin-grid">
+          <div class="panel">
+            <h3 style="margin:0 0 14px;font-size:15px;">Company Logo</h3>
+            <div class="logo-current">
+              <div class="box"><img id="adminLogoPreview" alt="Current logo"></div>
+              <div class="meta">
+                <div style="font-weight:700;color:var(--text);margin-bottom:2px;">Current logo</div>
+                <div id="adminLogoMeta">Using default ELYX.Digital logo</div>
+              </div>
+            </div>
+            <div class="logo-uploader" id="logoDropZone">
+              <div style="font-size:30px;margin-bottom:8px;">📤</div>
+              <p style="font-size:13px;color:var(--muted);"><strong style="color:var(--accent);">Click to upload</strong> or drag & drop</p>
+              <p style="font-size:11px;color:#a3a7bd;margin-top:4px;">PNG or JPG, transparent background recommended</p>
+            </div>
+            <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden">
+            <div class="admin-note">The logo is stored on this device/browser and used automatically for every card generated here — no need to re-upload each time. To make a new logo appear identically for every HR teammate, replace it here on the shared/primary machine used for wish generation, or ask your developer to bake it into the deployed file as the new default.</div>
+          </div>
+
+          <div class="panel">
+            <h3 style="margin:0 0 14px;font-size:15px;">Branding</h3>
+            <div class="field">
+              <label for="adminCompanyName">Company Name</label>
+              <input type="text" id="adminCompanyName" maxlength="60">
+            </div>
+            <div class="field">
+              <label for="adminFooter">Default Greeting Footer</label>
+              <input type="text" id="adminFooter" maxlength="90">
+            </div>
+            <div class="field">
+              <label>Brand Accent Color</label>
+              <div class="color-swatches" id="colorSwatches"></div>
+              <div class="hint">Used for the app's UI accent. Card backgrounds keep their own designed palette per occasion.</div>
+            </div>
+            <button class="btn btn-primary" id="btnSaveSettings">Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="app-footer">Employee Wishes Generator · Internal HR Tool</footer>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — change these before sharing the app with your team.
+   ===================================================================== */
+const CONFIG = {
+  ACCESS_CODE: 'ELYX@Wishes2026',        // shared code for HR / team members
+  ADMIN_ACCESS_CODE: 'ELYX@Admin2026',   // separate code — also unlocks Settings
+  APP_NAME: 'Employee Wishes Generator',
+  DEFAULT_COMPANY_NAME: 'ELYX',
+  DEFAULT_FOOTER: 'With warm wishes from Team ELYX',
+  DEFAULT_ACCENT: '#5b5bf0',
+  CARD_W: 1080,
+  CARD_H: 1350
+};
+const ACCENT_PALETTE = ['#5b5bf0','#8b5cf6','#d4af6a','#0f766e','#be123c','#1d4ed8'];
+
+/* =====================================================================
+   UTILITIES
+   ===================================================================== */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function slugify(str){
+  return String(str||'employee').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'employee';
+}
+let toastTimer=null;
+function toast(msg, type=''){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> el.classList.remove('show'), 3200);
+}
+
+// seeded PRNG for reproducible-but-variable decorative scatter
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* =====================================================================
+   STORAGE MODULES
+   ===================================================================== */
+const Settings = {
+  KEY: 'ewg_settings_v1',
+  defaults(){
+    return {
+      logo: null, // dataURL or null (use generated placeholder)
+      companyName: CONFIG.DEFAULT_COMPANY_NAME,
+      footer: CONFIG.DEFAULT_FOOTER,
+      accent: CONFIG.DEFAULT_ACCENT
+    };
+  },
+  get(){
+    try{
+      const raw = localStorage.getItem(this.KEY);
+      if(!raw) return this.defaults();
+      return Object.assign(this.defaults(), JSON.parse(raw));
+    }catch(e){ return this.defaults(); }
+  },
+  save(patch){
+    const merged = Object.assign(this.get(), patch);
+    localStorage.setItem(this.KEY, JSON.stringify(merged));
+    return merged;
+  }
+};
+
+const Auth = {
+  KEY: 'ewg_session_v1',
+  login(userId, password){
+    let role = null;
+    if(password === CONFIG.ADMIN_ACCESS_CODE) role = 'admin';
+    else if(password === CONFIG.ACCESS_CODE) role = 'user';
+    if(!role) return false;
+    localStorage.setItem(this.KEY, JSON.stringify({ userId: userId||'', role, ts: Date.now() }));
+    return true;
+  },
+  session(){
+    try{ return JSON.parse(localStorage.getItem(this.KEY)); }catch(e){ return null; }
+  },
+  isLoggedIn(){ return !!this.session(); },
+  isAdmin(){ const s=this.session(); return !!s && s.role==='admin'; },
+  logout(){ localStorage.removeItem(this.KEY); }
+};
+
+/* =====================================================================
+   LOGO HANDLING
+   ===================================================================== */
+// Baked-in company logo (ELYX.Digital wordmark) — ships with the app so every
+// team member sees the correct logo by default, with no upload required.
+// Admins can still replace it per-browser from Settings if it ever changes.
+const DEFAULT_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 92" width="360" height="92">
+  <rect x="2" y="6" width="80" height="80" rx="18" fill="#101114"/>
+  <g fill="#ffffff">
+    <path d="M 24 26 L 40 26 L 60 66 L 44 66 Z"/>
+    <path d="M 60 26 L 44 26 L 24 66 L 40 66 Z"/>
+  </g>
+  <text x="100" y="58" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="46" letter-spacing="0.5" fill="#101114">ELYX</text>
+  <text x="234" y="58" font-family="Inter, Arial, sans-serif" font-weight="400" font-size="38" fill="#9aa0ab">.Digital</text>
+</svg>`;
+const DEFAULT_LOGO_DATA_URL = 'data:image/svg+xml;utf8,' + encodeURIComponent(DEFAULT_LOGO_SVG);
+
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.onload = ()=> resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function getActiveLogoDataURL(){
+  const s = Settings.get();
+  return s.logo || DEFAULT_LOGO_DATA_URL;
+}
+
+function downscaleImageDataURL(dataURL, maxDim=600){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      let {width:w, height:h} = img;
+      if(w>maxDim || h>maxDim){
+        const ratio = Math.min(maxDim/w, maxDim/h);
+        w = Math.round(w*ratio); h = Math.round(h*ratio);
+      }
+      const c = document.createElement('canvas'); c.width=w; c.height=h;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = dataURL;
+  });
+}
+
+/* =====================================================================
+   CANVAS DRAWING HELPERS
+   ===================================================================== */
+function roundRectPath(ctx,x,y,w,h,r){
+  if (typeof r === 'number') r = {tl:r,tr:r,br:r,bl:r};
+  ctx.beginPath();
+  ctx.moveTo(x+r.tl,y);
+  ctx.lineTo(x+w-r.tr,y);
+  ctx.arcTo(x+w,y,x+w,y+r.tr,r.tr);
+  ctx.lineTo(x+w,y+h-r.br);
+  ctx.arcTo(x+w,y+h,x+w-r.br,y+h,r.br);
+  ctx.lineTo(x+r.bl,y+h);
+  ctx.arcTo(x,y+h,x,y+h-r.bl,r.bl);
+  ctx.lineTo(x,y+r.tl);
+  ctx.arcTo(x,y,x+r.tl,y,r.tl);
+  ctx.closePath();
+}
+
+function linearGradientBG(ctx,w,h,stops,angleDeg=135){
+  const rad = angleDeg*Math.PI/180;
+  const cx=w/2, cy=h/2, len=Math.max(w,h);
+  const x1 = cx - Math.cos(rad)*len/2, y1 = cy - Math.sin(rad)*len/2;
+  const x2 = cx + Math.cos(rad)*len/2, y2 = cy + Math.sin(rad)*len/2;
+  const g = ctx.createLinearGradient(x1,y1,x2,y2);
+  stops.forEach(([off,color])=> g.addColorStop(off,color));
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+}
+
+function fitFontSize(ctx, text, maxWidth, family, weight, startSize, minSize){
+  let size = startSize;
+  while(size > minSize){
+    ctx.font = `${weight} ${size}px ${family}`;
+    if(ctx.measureText(text).width <= maxWidth) break;
+    size -= 2;
+  }
+  return size;
+}
+
+function wrapLines(ctx, text, maxWidth){
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  words.forEach(word=>{
+    const test = line ? line + ' ' + word : word;
+    if(ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if(line) lines.push(line);
+  return lines;
+}
+
+function fillTextSpaced(ctx, text, cx, y, spacing){
+  const chars = String(text).split('');
+  let total = 0;
+  chars.forEach(ch => total += ctx.measureText(ch).width + spacing);
+  total -= spacing;
+  let x = cx - total/2;
+  chars.forEach(ch=>{
+    const w = ctx.measureText(ch).width;
+    ctx.fillText(ch, x + w/2, y);
+    x += w + spacing;
+  });
+}
+
+function drawSoftShadowRoundRect(ctx,x,y,w,h,r,fill){
+  ctx.save();
+  ctx.shadowColor = 'rgba(10,12,30,0.28)';
+  ctx.shadowBlur = 26;
+  ctx.shadowOffsetY = 10;
+  roundRectPath(ctx,x,y,w,h,r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.restore();
+}
+
+async function drawLogoPlate(ctx, logoImg, W){
+  const plateW = 360, plateH = 132;
+  const x = (W - plateW)/2, y = 66;
+  drawSoftShadowRoundRect(ctx, x, y, plateW, plateH, 20, '#ffffff');
+  // contain-fit logo within padded area
+  const pad = 22;
+  const areaW = plateW - pad*2, areaH = plateH - pad*2;
+  const ratio = Math.min(areaW/logoImg.width, areaH/logoImg.height);
+  const dw = logoImg.width*ratio, dh = logoImg.height*ratio;
+  const dx = x + (plateW-dw)/2, dy = y + (plateH-dh)/2;
+  ctx.drawImage(logoImg, dx, dy, dw, dh);
+  return y + plateH; // bottom edge
+}
+
+function drawFooter(ctx, W, H, data, accentColor){
+  const lineY = H - 108;
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W/2-70,lineY); ctx.lineTo(W/2+70,lineY); ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 21px Inter, sans-serif';
+  fillTextSpaced(ctx, (data.companyName||'').toUpperCase(), W/2, lineY+42, 3);
+
+  ctx.font = '400 16px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.fillText(data.footer||'', W/2, lineY+72);
+}
+
+function drawEyebrow(ctx, W, y, text, color){
+  ctx.textAlign='center';
+  ctx.fillStyle = color;
+  ctx.font = '700 15px Inter, sans-serif';
+  fillTextSpaced(ctx, text.toUpperCase(), W/2, y, 4);
+}
+
+function drawHeading(ctx, W, y, text, color, italic=false){
+  ctx.textAlign='center';
+  ctx.fillStyle = color;
+  const size = fitFontSize(ctx, text, W-160, 'Playfair Display', italic ? '800 italic' : '800', 66, 40);
+  ctx.font = `${italic?'italic ':''}800 ${size}px Playfair Display, serif`;
+  ctx.fillText(text, W/2, y);
+}
+
+// returns bottom Y of the name block
+function drawEmployeeName(ctx, W, centerY, name, color, shadow=true){
+  const maxWidth = W - 140;
+  let size = fitFontSize(ctx, name, maxWidth, 'Playfair Display', '800', 84, 44);
+  ctx.font = `800 ${size}px Playfair Display, serif`;
+  let lines = [name];
+  if(ctx.measureText(name).width > maxWidth){
+    lines = wrapLines(ctx, name, maxWidth);
+    if(lines.length > 2){
+      size = fitFontSize(ctx, lines[0], maxWidth, 'Playfair Display', '800', size, 36);
+      ctx.font = `800 ${size}px Playfair Display, serif`;
+    }
+  }
+  const lineHeight = size * 1.12;
+  const blockH = lineHeight * lines.length;
+  let y = centerY - blockH/2 + lineHeight*0.8;
+  ctx.textAlign = 'center';
+  lines.forEach(line=>{
+    if(shadow){
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillText(line, W/2+2, y+3);
+    }
+    ctx.fillStyle = color;
+    ctx.fillText(line, W/2, y);
+    y += lineHeight;
+  });
+  return centerY + blockH/2;
+}
+
+function drawMessage(ctx, W, startY, text, color){
+  ctx.textAlign='center';
+  ctx.fillStyle = color;
+  ctx.font = '400 30px Inter, sans-serif';
+  const maxWidth = 760;
+  const lines = wrapLines(ctx, text, maxWidth);
+  const lineHeight = 46;
+  let y = startY;
+  lines.forEach(line=>{ ctx.fillText(line, W/2, y); y += lineHeight; });
+  return y;
+}
+
+function drawPill(ctx, cx, y, text, bg, fg){
+  ctx.font = '600 22px Inter, sans-serif';
+  const padX = 22;
+  const w = ctx.measureText(text).width + padX*2;
+  const h = 44;
+  roundRectPath(ctx, cx-w/2, y-h/2, w, h, h/2);
+  ctx.fillStyle = bg;
+  ctx.fill();
+  ctx.fillStyle = fg;
+  ctx.textAlign = 'center'; ctx.textBaseline='middle';
+  ctx.fillText(text, cx, y+1);
+  ctx.textBaseline = 'alphabetic';
+  return h;
+}
+
+/* ---- decorative motifs ---- */
+function drawBokeh(ctx, seed, W, H, colors, count, excludeRect){
+  const rnd = mulberry32(seed);
+  for(let i=0;i<count;i++){
+    let x,y;
+    do{
+      x = rnd()*W; y = rnd()*H;
+    } while(excludeRect && x>excludeRect.x1 && x<excludeRect.x2 && y>excludeRect.y1 && y<excludeRect.y2);
+    const r = 18 + rnd()*70;
+    ctx.beginPath();
+    ctx.fillStyle = colors[Math.floor(rnd()*colors.length)];
+    ctx.globalAlpha = 0.06 + rnd()*0.10;
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawConfetti(ctx, seed, W, H, colors, count, excludeRect){
+  const rnd = mulberry32(seed+7);
+  for(let i=0;i<count;i++){
+    let x,y;
+    do{
+      x = rnd()*W; y = rnd()*H;
+    } while(excludeRect && x>excludeRect.x1 && x<excludeRect.x2 && y>excludeRect.y1 && y<excludeRect.y2);
+    const color = colors[Math.floor(rnd()*colors.length)];
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(rnd()*Math.PI);
+    ctx.globalAlpha = 0.55 + rnd()*0.35;
+    ctx.fillStyle = color;
+    if(rnd() > 0.5){
+      ctx.fillRect(-7,-3,14,6);
+    } else {
+      ctx.beginPath();
+      ctx.arc(0,0,3+rnd()*3,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBalloon(ctx, x, y, scale, color){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.scale(scale,scale);
+  ctx.globalAlpha = 0.85;
+  // balloon body
+  ctx.beginPath();
+  ctx.moveTo(0,-70);
+  ctx.bezierCurveTo(48,-70, 48,30, 0,55);
+  ctx.bezierCurveTo(-48,30, -48,-70, 0,-70);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(-40,-70,40,55);
+  g.addColorStop(0, color); g.addColorStop(1,'rgba(255,255,255,0.35)');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.stroke();
+  // knot
+  ctx.beginPath(); ctx.moveTo(-6,55); ctx.lineTo(6,55); ctx.lineTo(0,66); ctx.closePath();
+  ctx.fillStyle = color; ctx.fill();
+  // string
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(0,66);
+  ctx.bezierCurveTo(20,110, -20,150, 0,210);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function drawRibbonAccent(ctx, cx, y, color, width=200){
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath(); ctx.moveTo(cx-width/2, y); ctx.lineTo(cx-30, y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+30, y); ctx.lineTo(cx+width/2, y); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, y, 5, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawRingsMotif(cx_ctx, cx, cy, r, color){
+  const ctx = cx_ctx;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 5;
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath(); ctx.arc(cx-r*0.32, cy, r, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+r*0.32, cy, r, 0, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawFlourish(ctx, cx, cy, color){
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.75;
+  [-1,1].forEach(dir=>{
+    ctx.beginPath();
+    ctx.moveTo(cx + dir*40, cy);
+    ctx.bezierCurveTo(cx + dir*110, cy-30, cx + dir*140, cy+20, cx + dir*210, cy);
+    ctx.stroke();
+    // small dot flowers at the tip
+    for(let i=0;i<5;i++){
+      const angle = (i/5)*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(cx + dir*210 + Math.cos(angle)*9, cy + Math.sin(angle)*9, 3.4, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawDotGridTexture(ctx, W, H, color, opacity=0.05){
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.fillStyle = color;
+  for(let y=40; y<H; y+=34){
+    for(let x=40; x<W; x+=34){
+      ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawBadgeMedal(ctx, cx, cy, r, mainColor, accentColor){
+  ctx.save();
+  // ribbon tails
+  ctx.fillStyle = accentColor;
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  ctx.moveTo(cx-r*0.55, cy+r*0.35);
+  ctx.lineTo(cx-r*0.9, cy+r*1.9);
+  ctx.lineTo(cx-r*0.35, cy+r*1.35);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+r*0.55, cy+r*0.35);
+  ctx.lineTo(cx+r*0.9, cy+r*1.9);
+  ctx.lineTo(cx+r*0.35, cy+r*1.35);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+  // outer circle
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle = mainColor; ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = accentColor; ctx.stroke();
+  // inner circle
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.72,0,Math.PI*2);
+  ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.stroke();
+  // star
+  drawStar(ctx, cx, cy, 5, r*0.42, r*0.19, accentColor);
+  ctx.restore();
+}
+
+function drawStar(ctx, cx, cy, spikes, outerR, innerR, color){
+  let rot = Math.PI/2*3;
+  const step = Math.PI/spikes;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-outerR);
+  for(let i=0;i<spikes;i++){
+    ctx.lineTo(cx+Math.cos(rot)*outerR, cy+Math.sin(rot)*outerR); rot+=step;
+    ctx.lineTo(cx+Math.cos(rot)*innerR, cy+Math.sin(rot)*innerR); rot+=step;
+  }
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawGrowthBars(ctx, W, H, color){
+  const baseY = H - 150;
+  const n = 6, gap = 8, barW = 46;
+  const totalW = n*barW + (n-1)*gap;
+  let x = W/2 - totalW/2;
+  ctx.save();
+  ctx.globalAlpha = 0.10;
+  for(let i=0;i<n;i++){
+    const h = 30 + i*22;
+    roundRectPath(ctx, x, baseY-h, barW, h, 8);
+    ctx.fillStyle = color;
+    ctx.fill();
+    x += barW+gap;
+  }
+  ctx.restore();
+}
+
+function drawUpwardArrow(ctx, cx, y, color){
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cx-150, y+18);
+  ctx.quadraticCurveTo(cx-40, y+30, cx+40, y-10);
+  ctx.lineTo(cx+150, y-40);
+  ctx.stroke();
+  // arrow head
+  ctx.beginPath();
+  ctx.moveTo(cx+150, y-40);
+  ctx.lineTo(cx+126, y-38);
+  ctx.moveTo(cx+150, y-40);
+  ctx.lineTo(cx+140, y-16);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* =====================================================================
+   TEMPLATE DEFINITIONS — add future occasions here without touching
+   the dashboard, form or preview logic.
+   ===================================================================== */
+async function drawBirthdayCard(ctx, W, H, data, logoImg, seed){
+  linearGradientBG(ctx, W, H, [[0,'#ff7a59'],[0.55,'#ff9b54'],[1,'#ffc94a']], 130);
+  drawDotGridTexture(ctx, W, H, '#ffffff', 0.05);
+  const safe = {x1:150,x2:W-150,y1:230,y2:960};
+  drawBokeh(ctx, seed, W, H, ['#ffffff','#ffe3a0'], 12, safe);
+  drawConfetti(ctx, seed, W, H, ['#ffffff','#ffe29a','#2ec4b6','#ff477e'], 46, safe);
+  drawBalloon(ctx, 108, 1080, 0.62, '#ff477e');
+  drawBalloon(ctx, 175, 1150, 0.5, '#2ec4b6');
+  drawBalloon(ctx, W-108, 1080, 0.62, '#ffe066');
+  drawBalloon(ctx, W-175, 1150, 0.5, '#ffffff');
+
+  await drawLogoPlate(ctx, logoImg, W);
+  drawRibbonAccent(ctx, W/2, 372, '#ffffff');
+  drawEyebrow(ctx, W, 400, 'Celebrating You', 'rgba(255,255,255,0.92)');
+  drawHeading(ctx, W, 468, 'Happy Birthday!', '#ffffff');
+  const nameBottom1 = drawEmployeeName(ctx, W, 590, data.employeeName, '#fffdf6');
+  const mtStart1 = Math.max(700, nameBottom1 + 34);
+  const mtBottom1 = drawMessage(ctx, W, mtStart1, data.mainText, 'rgba(255,255,255,0.98)');
+  drawMessage(ctx, W, mtBottom1 + 12, data.message, 'rgba(255,255,255,0.92)');
+  drawFooter(ctx, W, H, data, '#ffffff');
+}
+
+async function drawWeddingCard(ctx, W, H, data, logoImg, seed){
+  linearGradientBG(ctx, W, H, [[0,'#3a1f2b'],[0.55,'#5c2a41'],[1,'#c99b6a']], 150);
+  drawDotGridTexture(ctx, W, H, '#e8c98f', 0.06);
+  const safe = {x1:150,x2:W-150,y1:230,y2:960};
+  drawBokeh(ctx, seed, W, H, ['#e8c98f','#ffffff'], 8, safe);
+
+  await drawLogoPlate(ctx, logoImg, W);
+  drawRingsMotif(ctx, W/2, 300, 42, '#e8c98f');
+  drawEyebrow(ctx, W, 396, 'Wishing You Both Joy', '#e8c98f');
+  drawHeading(ctx, W, 466, 'Happy Wedding Anniversary!', '#fbeee0', true);
+  const nameBottom2 = drawEmployeeName(ctx, W, 588, data.employeeName, '#ffffff');
+  const flourishY = Math.max(660, nameBottom2 + 34);
+  drawFlourish(ctx, W/2, flourishY, '#e8c98f');
+  const mtStart2 = flourishY + 60;
+  const mtBottom2 = drawMessage(ctx, W, mtStart2, data.mainText, 'rgba(255,255,255,0.98)');
+  drawMessage(ctx, W, mtBottom2 + 12, data.message, 'rgba(255,255,255,0.88)');
+  drawFooter(ctx, W, H, data, '#e8c98f');
+}
+
+async function drawWorkAnniversaryCard(ctx, W, H, data, logoImg, seed){
+  linearGradientBG(ctx, W, H, [[0,'#0b2447'],[0.6,'#124170'],[1,'#1b6b93']], 130);
+  drawGrowthBars(ctx, W, H, '#ffffff');
+  const safe = {x1:150,x2:W-150,y1:230,y2:960};
+  drawBokeh(ctx, seed, W, H, ['#e8b84b','#ffffff'], 8, safe);
+
+  await drawLogoPlate(ctx, logoImg, W);
+  drawBadgeMedal(ctx, W/2, 300, 46, '#e8b84b', '#0b2447');
+  drawEyebrow(ctx, W, 400, 'Celebrating A Milestone', '#e8b84b');
+  drawHeading(ctx, W, 468, 'Happy Work Anniversary!', '#ffffff');
+  drawUpwardArrow(ctx, W/2, 520, '#e8b84b');
+  let y = drawEmployeeName(ctx, W, 590, data.mainText, '#ffffff');
+  y = drawMessage(ctx, W, Math.max(700, y + 34), data.message, 'rgba(255,255,255,0.92)');
+
+  const tags = [data.designation, data.department].filter(Boolean);
+  if(tags.length){
+    let px = W/2;
+    const widths = tags.map(t=>{ ctx.font='600 22px Inter, sans-serif'; return ctx.measureText(t).width + 44 + 14; });
+    const totalW = widths.reduce((a,b)=>a+b,0) - 14;
+    let x = W/2 - totalW/2;
+    tags.forEach((t,i)=>{
+      const w = widths[i]-14;
+      ctx.font = '600 22px Inter, sans-serif';
+      roundRectPath(ctx, x, y+18-22, w, 44, 22);
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(232,184,75,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(t, x+w/2, y+18+1);
+      ctx.textBaseline='alphabetic';
+      x += w + 14;
+    });
+  }
+  drawFooter(ctx, W, H, data, '#e8b84b');
+}
+
+const TEMPLATES = {
+  birthday: {
+    key:'birthday', label:'Birthday Wishes', emoji:'🎂',
+    cardClass:'birthday',
+    cta:'Create a Birthday Wish',
+    occasionLabel:'Birthday',
+    buildData(input, settings){
+      return {
+        employeeName: input.employeeName,
+        designation: input.designation,
+        department: input.department,
+        mainText: `Wishing you a very Happy Birthday, ${input.employeeName}!`,
+        message: 'May your special day be filled with happiness, positivity and wonderful moments. Wishing you continued success, good health and a fantastic year ahead!',
+        companyName: settings.companyName,
+        footer: settings.footer
+      };
+    },
+    draw: drawBirthdayCard
+  },
+  wedding: {
+    key:'wedding', label:'Wedding Anniversary', emoji:'💍',
+    cardClass:'wedding',
+    cta:'Create a Wedding Anniversary Wish',
+    occasionLabel:'Wedding Anniversary',
+    buildData(input, settings){
+      return {
+        employeeName: input.employeeName,
+        designation: input.designation,
+        department: input.department,
+        mainText: `Warm wishes to ${input.employeeName} on your Wedding Anniversary!`,
+        message: 'Wishing you both a beautiful journey filled with love, happiness, togetherness and many wonderful memories. May your bond continue to grow stronger with each passing year.',
+        companyName: settings.companyName,
+        footer: settings.footer
+      };
+    },
+    draw: drawWeddingCard
+  },
+  work: {
+    key:'work', label:'Employment Anniversary', emoji:'🎉',
+    cardClass:'work',
+    cta:'Create an Employment Anniversary Wish',
+    occasionLabel:'Work Anniversary',
+    buildData(input, settings){
+      return {
+        employeeName: input.employeeName,
+        designation: input.designation,
+        department: input.department,
+        mainText: `Congratulations, ${input.employeeName}!`,
+        message: 'Congratulations on another successful year with us! Thank you for your dedication, commitment and valuable contribution to the organization. Wishing you continued growth, success and many more milestones ahead.',
+        companyName: settings.companyName,
+        footer: settings.footer
+      };
+    },
+    draw: drawWorkAnniversaryCard
+  }
+};
+
+/* =====================================================================
+   RENDER PIPELINE
+   ===================================================================== */
+let FONTS_READY = false;
+async function ensureFonts(){
+  if(FONTS_READY) return;
+  try{
+    await Promise.all([
+      document.fonts.load('800 64px "Playfair Display"'),
+      document.fonts.load('800 italic 64px "Playfair Display"'),
+      document.fonts.load('700 20px "Inter"'),
+      document.fonts.load('400 30px "Inter"'),
+      document.fonts.load('600 22px "Inter"')
+    ]);
+    await document.fonts.ready;
+  }catch(e){ /* fonts API may be unavailable; canvas will fall back gracefully */ }
+  FONTS_READY = true;
+}
+
+async function renderCard(templateKey, input, seed){
+  await ensureFonts();
+  const settings = Settings.get();
+  const tpl = TEMPLATES[templateKey];
+  const data = tpl.buildData(input, settings);
+  const canvas = $('#wishCanvas');
+  canvas.width = CONFIG.CARD_W; canvas.height = CONFIG.CARD_H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const logoDataURL = await getActiveLogoDataURL();
+  const logoImg = await loadImage(logoDataURL);
+  await tpl.draw(ctx, canvas.width, canvas.height, data, logoImg, seed);
+  return { canvas, data, tpl };
+}
+
+function canvasToBlob(canvas, type){
+  return new Promise(resolve=>{
+    if(type === 'png'){
+      canvas.toBlob(b=>resolve(b), 'image/png', 1);
+      return;
+    }
+    const tmp = document.createElement('canvas');
+    tmp.width = canvas.width; tmp.height = canvas.height;
+    const tctx = tmp.getContext('2d');
+    tctx.fillStyle = '#ffffff';
+    tctx.fillRect(0,0,tmp.width,tmp.height);
+    tctx.drawImage(canvas,0,0);
+    tmp.toBlob(b=>resolve(b), 'image/jpeg', 0.95);
+  });
+}
+
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+function buildWhatsAppMessage(tpl, employeeName){
+  return `Dear ${employeeName}, wishing you a very Happy ${tpl.occasionLabel}! 🎉\nWarm wishes from the entire team!`;
+}
+
+/* =====================================================================
+   APP STATE + ROUTER
+   ===================================================================== */
+const State = {
+  currentOccasion: null,
+  currentInput: null,
+  currentSeed: 1,
+  lastTpl: null
+};
+
+function setRoute(hash){ location.hash = hash; }
+
+function guardedRoute(){
+  const hash = location.hash || '#/dashboard';
+  const loggedIn = Auth.isLoggedIn();
+
+  if(!loggedIn){
+    showScreen('login');
+    return;
+  }
+  showScreen('app');
+
+  if(hash.startsWith('#/admin')){
+    if(!Auth.isAdmin()){
+      toast('Admin access required for Settings.', 'error');
+      setRoute('#/dashboard');
+      return;
+    }
+    showView('admin'); renderAdmin();
+  } else if(hash.startsWith('#/form/')){
+    const key = hash.split('/')[2];
+    if(!TEMPLATES[key]){ setRoute('#/dashboard'); return; }
+    State.currentOccasion = key;
+    showView('form'); renderForm(key);
+  } else if(hash.startsWith('#/preview')){
+    if(!State.currentOccasion || !State.currentInput){ setRoute('#/dashboard'); return; }
+    showView('preview'); renderPreview();
+  } else {
+    showView('dashboard'); renderDashboard();
+  }
+  updateNav();
+}
+
+function showScreen(name){
+  $('#screen-login').classList.toggle('hidden', name!=='login');
+  $('#screen-app').classList.toggle('hidden', name!=='app');
+}
+function showView(name){
+  ['dashboard','form','preview','admin'].forEach(v=>{
+    $('#view-'+v).classList.toggle('hidden', v!==name);
+  });
+}
+function updateNav(){
+  const isAdmin = Auth.isAdmin();
+  $('#navAdmin').classList.toggle('hidden', !isAdmin);
+  const session = Auth.session();
+  $('#navUser').textContent = session && session.userId ? `Logged in as ${session.userId}` : '';
+  $$('.nav-link').forEach(el=>{
+    el.classList.toggle('active', location.hash.startsWith(el.dataset.route));
+  });
+  applyBranding();
+}
+
+function applyBranding(){
+  const s = Settings.get();
+  document.documentElement.style.setProperty('--accent', s.accent);
+  $('#topbarTitle').textContent = CONFIG.APP_NAME;
+  $('#topbarSub').textContent = s.companyName + ' · HR Wishes Dashboard';
+  getActiveLogoDataURL().then(src=>{
+    $('#topbarLogoBox').innerHTML = `<img src="${src}" alt="logo">`;
+    $('#loginLogoBox').innerHTML = `<img src="${src}" alt="logo">`;
+  });
+}
+
+/* -------- Dashboard -------- */
+function renderDashboard(){
+  const grid = $('#occasionGrid');
+  grid.innerHTML = Object.values(TEMPLATES).map(tpl => `
+    <div class="occasion-card ${tpl.cardClass}" data-key="${tpl.key}">
+      <div class="glow"></div>
+      <span class="occasion-emoji">${tpl.emoji}</span>
+      <h3>${escapeHtml(tpl.label)}</h3>
+      <p>Generate a premium ${escapeHtml(tpl.label.toLowerCase())} card in seconds.</p>
+      <button class="btn btn-primary">${escapeHtml(tpl.cta)}</button>
+    </div>
+  `).join('');
+  $$('.occasion-card', grid).forEach(card=>{
+    card.addEventListener('click', ()=> setRoute('#/form/'+card.dataset.key));
+  });
+}
+
+/* -------- Form -------- */
+function renderForm(key){
+  const tpl = TEMPLATES[key];
+  $('#formBadge').textContent = `${tpl.emoji} ${tpl.label}`;
+  $('#formTitle').textContent = tpl.cta;
+  $('#formCrumb').textContent = tpl.label;
+
+  const prefill = (State.currentOccasion === key && State.currentInput) ? State.currentInput : { employeeName:'', designation:'', department:'' };
+  $('#fEmployeeName').value = prefill.employeeName || '';
+  $('#fDesignation').value = prefill.designation || '';
+  $('#fDepartment').value = prefill.department || '';
+  setTimeout(()=> $('#fEmployeeName').focus(), 50);
+}
+
+$('#wishForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const employeeName = $('#fEmployeeName').value.trim();
+  if(!employeeName){ toast('Employee name is required.', 'error'); $('#fEmployeeName').focus(); return; }
+  State.currentInput = {
+    employeeName,
+    designation: $('#fDesignation').value.trim(),
+    department: $('#fDepartment').value.trim()
+  };
+  State.currentSeed = Math.floor(Math.random()*100000);
+  const btn = $('#btnGenerate');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try{
+    setRoute('#/preview');
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Generate Wish';
+  }
+});
+
+/* -------- Preview -------- */
+async function renderPreview(){
+  const key = State.currentOccasion;
+  const { tpl, data } = await renderCard(key, State.currentInput, State.currentSeed);
+  State.lastTpl = tpl;
+  $('#previewHeading').textContent = `${tpl.emoji} ${escapeHtml(data.employeeName)}'s ${tpl.label} card is ready`;
+  $('#previewCrumbBack').textContent = tpl.label;
+  const waMsg = buildWhatsAppMessage(tpl, data.employeeName);
+  $('#msgPreview').textContent = waMsg;
+}
+
+$('#previewCrumbBack').addEventListener('click', ()=> setRoute('#/form/'+State.currentOccasion));
+$('#btnRegenerate').addEventListener('click', async ()=>{
+  State.currentSeed = Math.floor(Math.random()*100000);
+  await renderPreview();
+  toast('Generated a fresh variation.');
+});
+$('#btnEditName').addEventListener('click', ()=> setRoute('#/form/'+State.currentOccasion));
+
+$('#btnDownloadPng').addEventListener('click', async ()=>{
+  const canvas = $('#wishCanvas');
+  const blob = await canvasToBlob(canvas, 'png');
+  downloadBlob(blob, `${State.currentOccasion}-wish-${slugify(State.currentInput.employeeName)}.png`);
+  toast('PNG downloaded.', 'success');
+});
+$('#btnDownloadJpg').addEventListener('click', async ()=>{
+  const canvas = $('#wishCanvas');
+  const blob = await canvasToBlob(canvas, 'jpeg');
+  downloadBlob(blob, `${State.currentOccasion}-wish-${slugify(State.currentInput.employeeName)}.jpg`);
+  toast('JPG downloaded.', 'success');
+});
+$('#btnCopyMsg').addEventListener('click', async ()=>{
+  const text = $('#msgPreview').textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Message copied to clipboard.', 'success');
+  }catch(e){
+    toast('Copy failed — please select and copy the text manually.', 'error');
+  }
+});
+
+async function nativeShare(withWhatsAppHint){
+  const canvas = $('#wishCanvas');
+  const tpl = State.lastTpl;
+  const name = State.currentInput.employeeName;
+  const filename = `${State.currentOccasion}-wish-${slugify(name)}.png`;
+  const text = buildWhatsAppMessage(tpl, name);
+  const blob = await canvasToBlob(canvas, 'png');
+  const file = new File([blob], filename, { type:'image/png' });
+
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try{
+      await navigator.share({ files:[file], title: CONFIG.APP_NAME, text });
+      return true;
+    }catch(e){
+      if(e && e.name === 'AbortError') return true;
+      // fall through to fallback
+    }
+  }
+  if(navigator.share){
+    try{ await navigator.share({ title: CONFIG.APP_NAME, text }); return true; }catch(e){ if(e && e.name==='AbortError') return true; }
+  }
+  // fallback: download + (optionally) open WhatsApp web/deep link with text
+  downloadBlob(blob, filename);
+  if(withWhatsAppHint){
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    toast('Image downloaded — attach it in the WhatsApp chat that just opened.');
+  } else {
+    toast("Sharing isn't supported on this browser — image downloaded instead.");
+  }
+  return false;
+}
+
+$('#btnShare').addEventListener('click', ()=> nativeShare(false));
+$('#btnWhatsapp').addEventListener('click', ()=> nativeShare(true));
+
+/* -------- Admin -------- */
+function renderAdmin(){
+  const s = Settings.get();
+  getActiveLogoDataURL().then(src=>{
+    $('#adminLogoPreview').src = src;
+  });
+  $('#adminLogoMeta').textContent = s.logo ? 'Custom logo uploaded' : 'Using default ELYX.Digital logo — upload a replacement below if needed.';
+  $('#adminCompanyName').value = s.companyName;
+  $('#adminFooter').value = s.footer;
+
+  const sw = $('#colorSwatches');
+  sw.innerHTML = ACCENT_PALETTE.map(c=>`<div class="swatch ${c===s.accent?'selected':''}" style="background:${c}" data-color="${c}"></div>`).join('');
+  $$('.swatch', sw).forEach(el=>{
+    el.addEventListener('click', ()=>{
+      $$('.swatch', sw).forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected');
+    });
+  });
+}
+
+async function handleLogoFile(file){
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ toast('Please upload an image file.', 'error'); return; }
+  if(file.size > 8*1024*1024){ toast('Image is too large (max 8MB).', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    try{
+      const downsized = await downscaleImageDataURL(e.target.result, 600);
+      Settings.save({ logo: downsized });
+      renderAdmin();
+      applyBranding();
+      toast('Logo updated for all future wish cards.', 'success');
+    }catch(err){
+      toast('Could not read that image. Try a different file.', 'error');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+$('#logoDropZone').addEventListener('click', ()=> $('#logoFileInput').click());
+$('#logoFileInput').addEventListener('change', (e)=> handleLogoFile(e.target.files[0]));
+['dragover','dragleave','drop'].forEach(evt=>{
+  $('#logoDropZone').addEventListener(evt, (e)=>{
+    e.preventDefault();
+    $('#logoDropZone').classList.toggle('drag', evt==='dragover');
+    if(evt==='drop') handleLogoFile(e.dataTransfer.files[0]);
+  });
+});
+
+$('#btnSaveSettings').addEventListener('click', ()=>{
+  const selectedSwatch = $('.swatch.selected');
+  Settings.save({
+    companyName: $('#adminCompanyName').value.trim() || CONFIG.DEFAULT_COMPANY_NAME,
+    footer: $('#adminFooter').value.trim() || CONFIG.DEFAULT_FOOTER,
+    accent: selectedSwatch ? selectedSwatch.dataset.color : Settings.get().accent
+  });
+  applyBranding();
+  toast('Settings saved.', 'success');
+});
+
+/* -------- Login -------- */
+$('#loginForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const userId = $('#loginUser').value.trim();
+  const pass = $('#loginPass').value;
+  const ok = Auth.login(userId, pass);
+  const errEl = $('#loginError');
+  if(!ok){
+    errEl.textContent = 'Incorrect access code. Please check with your admin.';
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+  $('#loginPass').value = '';
+  setRoute('#/dashboard');
+  guardedRoute();
+});
+
+$('#btnLogout').addEventListener('click', ()=>{
+  Auth.logout();
+  location.hash = '';
+  guardedRoute();
+});
+
+$$('.nav-link, .breadcrumb .link').forEach(el=>{
+  if(el.dataset.route) el.addEventListener('click', ()=> setRoute(el.dataset.route));
+});
+document.addEventListener('click', (e)=>{
+  const t = e.target.closest('[data-route]');
+  if(t) setRoute(t.dataset.route);
+});
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+window.addEventListener('hashchange', guardedRoute);
+window.addEventListener('DOMContentLoaded', ()=>{
+  applyBranding();
+  guardedRoute();
+});
+if(document.readyState !== 'loading'){ applyBranding(); guardedRoute(); }
+</script>
+</body>
+</html>
